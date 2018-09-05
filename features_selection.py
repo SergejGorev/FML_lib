@@ -59,16 +59,8 @@ class FeaturesSelectionClass:
         print('features_arr:\n', features_arr)
         return features_arr
 
-
-    def setting_features_count(self):
-        features_count = len(self.features_arr)
-        n_features = int(features_count * self.features_part) if self.features_part <= 1. else features_count
-        self.n_features = n_features
-        print('\nfeatures_count= {0}, features_part= {1}, n_features= {2}'.format(features_count, self.features_part,
-                                                                                self.n_features))
-
     @staticmethod
-    def cv_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_,
+    def cv_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
                max_depth_=3, n_estimators_=100, n_jobs_=-1):
         res_dict = {}
         acc_arr = []
@@ -147,6 +139,14 @@ class FeaturesSelectionClass:
         res_dict['features_imp_dict'] = features_imp_dict
 
         return res_dict
+
+
+    def setting_features_count(self):
+        features_count = len(self.features_arr)
+        n_features = int(features_count * self.features_part) if self.features_part <= 1. else features_count
+        self.n_features = n_features
+        print('\nfeatures_count= {0}, features_part= {1}, n_features= {2}'.format(features_count, self.features_part,
+                                                                                self.n_features))
 
 
     def features_selection(self, data_lbl):
