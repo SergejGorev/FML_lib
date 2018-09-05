@@ -62,7 +62,7 @@ class FeaturesSelectionClass:
 
     @staticmethod
     def cross_val_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
-               max_depth_=3, n_estimators_=100, n_jobs_=-1):
+               max_depth_=3, n_estimators_=100, n_jobs_=-1, print_log=True):
         res_dict = {}
         acc_arr = []
         f1_arr = []
@@ -70,10 +70,10 @@ class FeaturesSelectionClass:
         ftrs_imp_arr = []
 
         test_periods_count = len(testTimes_)
-        print('test_periods_count= ', test_periods_count)
+        if print_log: print('test_periods_count= ', test_periods_count)
 
         for test in zip(testTimes_.index, testTimes_):
-            print('\ntest= {0}'.format(test))
+            if print_log: print('\ntest= {0}'.format(test))
             clf = XGBClassifier(max_depth=max_depth_, n_estimators=n_estimators_, n_jobs=n_jobs_)
 
             df_test_iter = df_test_.loc[(test[0] <= df_test_.index) & (df_test_.index <= test[1]), :]
@@ -88,40 +88,41 @@ class FeaturesSelectionClass:
             y_pred_iter = clf.predict(X_test_iter)
 
             acc = accuracy_score(y_test_iter, y_pred_iter)
-            print('accuracy= {0:.5f}'.format(acc))
+            if print_log: print('accuracy= {0:.5f}'.format(acc))
             acc_arr.append(acc)
             f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
-            print('f1_score= {0:.5f}'.format(f1_scr))
+            if print_log: print('f1_score= {0:.5f}'.format(f1_scr))
             f1_arr.append(f1_scr)
             conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
-            print('\nconf_matrix:\n{}'.format(conf_matrix))
+            if print_log: print('\nconf_matrix:\n{}'.format(conf_matrix))
             conf_matrix_arr.append(conf_matrix)
 
-            print("\nfeature_importances:")
+            if print_log: print("\nfeature_importances:")
             f_i = list(zip(features_for_ml_, clf.feature_importances_))
             dtype = [('feature', 'S30'), ('importance', float)]
             f_i_nd = np.array(f_i, dtype=dtype)
             f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
             f_i_arr = f_i_sort.tolist()
             ftrs_imp_arr.append(f_i_arr)
-            for i, imp in enumerate(f_i_arr, 1):
-                print('{0}. {1:<30} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
+            if print_log:
+                for i, imp in enumerate(f_i_arr, 1):
+                    print('{0}. {1:<30} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
 
-        print('\nacc_arr= ', acc_arr)
+        if print_log: print('\nacc_arr= ', acc_arr)
         acc_arr_mean = np.mean(acc_arr)
         acc_arr_std = np.std(acc_arr)
-        print('acc_arr_mean= {0:.5f}, acc_arr_std= {1:.5f}'.format(acc_arr_mean, acc_arr_std))
+        if print_log: print('acc_arr_mean= {0:.5f}, acc_arr_std= {1:.5f}'.format(acc_arr_mean, acc_arr_std))
         res_dict['acc_score_mean'] = acc_arr_mean
         res_dict['acc_score_std'] = acc_arr_std
         res_dict['acc_score_arr'] = acc_arr
-        print('\nf1_arr= ', f1_arr)
+        if print_log: print('\nf1_arr= ', f1_arr)
         f1_arr_mean = np.mean(f1_arr)
         f1_arr_std = np.std(f1_arr)
-        print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
+        if print_log: print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
         res_dict['f1_score_mean'] = f1_arr_mean
         res_dict['f1_score_std'] = f1_arr_std
         res_dict['f1_score_arr'] = f1_arr
-        print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
+        if print_log: print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
         # ---
         res_dict['conf_matrix_arr'] = conf_matrix_arr
         # ---
@@ -134,7 +135,7 @@ class FeaturesSelectionClass:
             feature_name = str(feature_name).replace("b'", "").replace("'", "")
             feature_arr = [ftrs_imp_arr[my_iter][i][1] for my_iter in range(test_periods_count)]
             feature_arr_mean = np.mean(feature_arr)
-            print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
+            if print_log: print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
                                                                               feature_arr, feature_arr_mean))
             features_imp_dict[feature_name] = feature_arr_mean
         res_dict['features_imp_dict'] = features_imp_dict
