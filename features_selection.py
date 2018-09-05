@@ -10,11 +10,11 @@ import copy
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.10  # доля признаков, участвующих в тестировании в каждом проходе
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
-    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"
+    label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
     target_clmn = 'target_label_0i0025_1i0_1i0'
     dump_pickle = True # dump data pickle
-    f_i_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905_2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp.pickle"
+    f_i_path_for_dump = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905_3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -31,30 +31,33 @@ class FeaturesSelectionClass:
     last_clmn = 0
     # ---
 
-    def select_data_for_ml(self, data, data_lbl):
-        data_sel_idx = finfunctions.getTEvents(data.open_ask, self.price_step)
+    @staticmethod
+    def select_data_for_ml(data_lbl, price_step, target_clmn):
+        data_sel_idx = finfunctions.getTEvents(data_lbl.open_ask, price_step)
         print('len(data_sel_idx)= {}'.format(len(data_sel_idx)))
-
         data_for_ml = data_lbl.loc[data_sel_idx, :]
         # !!! убираем из обучения метки с нулями !!!
-        data_for_ml = data_for_ml.loc[data_for_ml[self.target_clmn] != 0, :]
-        self.data_for_ml = data_for_ml
-        # print('\ndata_samples.sample(5):\n', data_samples.sample(5))
-        data_for_ml_group = data_for_ml.groupby(by=self.target_clmn)[self.target_clmn].count()
+        data_for_ml = data_for_ml.loc[data_for_ml[target_clmn] != 0, :]
+        data_for_ml_group = data_for_ml.groupby(by=target_clmn)[target_clmn].count()
         print('\ndata_samples_group:\n', data_for_ml_group)
+        return data_for_ml
+
+    @staticmethod
+    def set_testTimes(dt0, dt1):
         # формирование тестовых периодов
-        self.testTimes = pd.Series(self.dt1, index=self.dt0)
-        print('\ntestTimes:\n{}'.format(self.testTimes))
+        testTimes = pd.Series(dt1, index=dt0)
+        print('\ntestTimes:\n{}'.format(testTimes))
+        return testTimes
 
-
-    def setting_features_array(self, data_lbl):
+    @staticmethod
+    def setting_features_array(data_lbl, last_clmn):
         features_arr = []
         features_arr.append(data_lbl.columns[17])
         features_arr.append(data_lbl.columns[16])
-        features_arr.extend(data_lbl.columns[24:self.last_clmn])
+        features_arr.extend(data_lbl.columns[24:last_clmn])
         features_arr.remove('return')
         print('features_arr:\n', features_arr)
-        self.features_arr = features_arr
+        return features_arr
 
 
     def setting_features_count(self):
@@ -64,9 +67,90 @@ class FeaturesSelectionClass:
         print('\nfeatures_count= {0}, features_part= {1}, n_features= {2}'.format(features_count, self.features_part,
                                                                                 self.n_features))
 
+    @staticmethod
+    def cv_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_,
+               max_depth_=3, n_estimators_=100, n_jobs_=-1):
+        res_dict = {}
+        acc_arr = []
+        f1_arr = []
+        conf_matrix_arr = []
+        ftrs_imp_arr = []
+
+        test_periods_count = len(testTimes_)
+        print('test_periods_count= ', test_periods_count)
+
+        for test in zip(testTimes_.index, testTimes_):
+            print('\ntest= {0}'.format(test))
+            clf = XGBClassifier(max_depth=max_depth_, n_estimators=n_estimators_, n_jobs=n_jobs_)
+
+            df_test_iter = df_test_.loc[(test[0] <= df_test_.index) & (df_test_.index <= test[1]), :]
+            df_train_iter = df_train_.loc[df_train_.index.difference(df_test_iter.index)]
+
+            X_train_iter = df_train_iter.loc[:, features_for_ml_]
+            y_train_iter = df_train_iter.loc[:, target_clmn_]
+            X_test_iter = df_test_iter.loc[:, features_for_ml_]
+            y_test_iter = df_test_iter.loc[:, target_clmn_]
+
+            clf.fit(X_train_iter, y_train_iter)
+            y_pred_iter = clf.predict(X_test_iter)
+
+            acc = accuracy_score(y_test_iter, y_pred_iter)
+            print('accuracy= {0:.5f}'.format(acc))
+            acc_arr.append(acc)
+            f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
+            print('f1_score= {0:.5f}'.format(f1_scr))
+            f1_arr.append(f1_scr)
+            conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
+            print('\nconf_matrix:\n{}'.format(conf_matrix))
+            conf_matrix_arr.append(conf_matrix)
+
+            print("\nfeature_importances:")
+            f_i = list(zip(features_for_ml_, clf.feature_importances_))
+            dtype = [('feature', 'S30'), ('importance', float)]
+            f_i_nd = np.array(f_i, dtype=dtype)
+            f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
+            f_i_arr = f_i_sort.tolist()
+            ftrs_imp_arr.append(f_i_arr)
+            for i, imp in enumerate(f_i_arr, 1):
+                print('{0}. {1:<30} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
+
+        print('\nacc_arr= ', acc_arr)
+        acc_arr_mean = np.mean(acc_arr)
+        acc_arr_std = np.std(acc_arr)
+        print('acc_arr_mean= {0:.5f}, acc_arr_std= {1:.5f}'.format(acc_arr_mean, acc_arr_std))
+        res_dict['acc_score_mean'] = acc_arr_mean
+        res_dict['acc_score_std'] = acc_arr_std
+        res_dict['acc_score_arr'] = acc_arr
+        print('\nf1_arr= ', f1_arr)
+        f1_arr_mean = np.mean(f1_arr)
+        f1_arr_std = np.std(f1_arr)
+        print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
+        res_dict['f1_score_mean'] = f1_arr_mean
+        res_dict['f1_score_std'] = f1_arr_std
+        res_dict['f1_score_arr'] = f1_arr
+        print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
+        # ---
+        res_dict['conf_matrix_arr'] = conf_matrix_arr
+        # ---
+        # print('\nftrs_imp_arr:\n', ftrs_imp_arr)
+        res_dict['ftrs_imp_arr'] = ftrs_imp_arr
+
+        features_imp_dict = {}
+        for i in range(len(ftrs_imp_arr[0])):
+            feature_name = ftrs_imp_arr[0][i][0]
+            feature_name = str(feature_name).replace("b'", "").replace("'", "")
+            feature_arr = [ftrs_imp_arr[my_iter][i][1] for my_iter in range(test_periods_count)]
+            feature_arr_mean = np.mean(feature_arr)
+            print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
+                                                                              feature_arr, feature_arr_mean))
+            features_imp_dict[feature_name] = feature_arr_mean
+        res_dict['features_imp_dict'] = features_imp_dict
+
+        return res_dict
+
 
     def features_selection(self, data_lbl):
-        self.setting_features_array(data_lbl)
+        self.features_arr = self.setting_features_array(data_lbl, self.last_clmn)
         self.setting_features_count()
         # ---
         df_columns = ['acc_score_mean', 'acc_score_std', 'acc_score_arr', 'f1_score_mean', 'f1_score_std', 'f1_score_arr']
@@ -192,9 +276,11 @@ class FeaturesSelectionClass:
         print('self.last_clmn= ', self.last_clmn)
         print('last 5 columns: ', data_lbl.columns[self.last_clmn-5 : self.last_clmn])
         # ---
-        self.select_data_for_ml(data, data_lbl)
         del data
         del lbl
+        self.testTimes = self.set_testTimes(dt0=self.dt0, dt1=self.dt1)
+        self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+                                                   target_clmn=self.target_clmn)
         self.features_selection(data_lbl)
         #---
 
