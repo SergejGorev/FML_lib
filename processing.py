@@ -9,8 +9,10 @@ def features_add(df, function, add_columns, shift=0, **params):
     Остальные параметры передаются в функцию именованными в соответствие с требованиями даной функции.
     Например, для tl.BBANDS: real=data['open'].values, timeperiod=int(4*24*0.75), nbdevup=1.5, nbdevdn=1.5, matype=0
     """
-    #print('\nparams: ', params)
+    # print('function= ', function)
+    # print('\nparams: ', params)
     res = function(**params)
+    # print('res:\n', res)
 
     if shift>0:
         if len(add_columns) == 1:

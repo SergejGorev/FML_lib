@@ -8,13 +8,13 @@ from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 import copy
 
 class FeaturesSelectionClass:
-    n_loops = 1500  # количество циклов
+    n_loops = 2500  # количество циклов
     features_part = 0.10  # доля признаков, участвующих в тестировании в каждом проходе
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1.pickle"
-    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
+    label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
     target_clmn = 'target_label_0i0025_1i0_1i0'
     dump_pickle = True # dump data pickle
-    f_i_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp.pickle"
+    f_i_path_for_dump = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp.pickle"
 
     price_step = 0.0010
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -28,6 +28,7 @@ class FeaturesSelectionClass:
     data_for_ml = None
     features_arr = []
     n_features = 0
+    last_clmn = 0
     # ---
 
     def select_data_for_ml(self, data, data_lbl):
@@ -50,7 +51,7 @@ class FeaturesSelectionClass:
         features_arr = []
         features_arr.append(data_lbl.columns[17])
         features_arr.append(data_lbl.columns[16])
-        features_arr.extend(data_lbl.columns[24:350])
+        features_arr.extend(data_lbl.columns[24:self.last_clmn])
         features_arr.remove('return')
         print('features_arr:\n', features_arr)
         self.features_arr = features_arr
@@ -187,6 +188,9 @@ class FeaturesSelectionClass:
         data_lbl = pd.concat((data, lbl), axis=1)
         print('data_lbl.shape: ', data_lbl.shape)
 
+        self.last_clmn = data.shape[1]
+        print('self.last_clmn= ', self.last_clmn)
+        print('last 5 columns: ', data_lbl.columns[self.last_clmn-5 : self.last_clmn])
         # ---
         self.select_data_for_ml(data, data_lbl)
         del data

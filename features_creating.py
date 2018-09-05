@@ -14,8 +14,8 @@ import pickle
 
 class FeaturesCalcClass:
     #---
-    num_threads = 8
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
+    num_threads = 16
+    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
     dump_pickle = True # dump data pickle
     data_pickle_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
 
@@ -30,7 +30,7 @@ class FeaturesCalcClass:
     # 2. Exponential Moving Averages
     ema_tmprd_arr = [6, 108, 288, 432, 576, 720]
     ema_base_clmn_name = 'ema'
-    ema_fin_func = tl.EMA
+    # ema_fin_func = tl.EMA
 
     # 3. Sharpe Ratio
     sr_tmprd_arr = [108, 288, 576, 720, 1440]
@@ -46,53 +46,53 @@ class FeaturesCalcClass:
     bb_tmprd_arr = [72, 108, 190, 288, 576, 720]
     bb_d_arr = [0.5, 1., 1.5, 2., 2.5, 3.]
     bb_base_clmn_names = ['ubb', 'mbb', 'lbb']
-    bb_fin_func = tl.BBANDS
+    # bb_fin_func = tl.BBANDS
 
     # 6. Stochastic Oscillator
     so_param_arr = [(5, 2), (6, 3), (12, 3), (36, 2), (78, 2), (234, 2)]
     so_k_slowk_period = 0.5
     so_base_clmn_names = ['so_k', 'so_d']
-    so_fin_func = tl.STOCH
+    # so_fin_func = tl.STOCH
     # STOCH(high, low, close[, fastk_period=?, slowk_period=?, slowk_matype=?, slowd_period=?, slowd_matype=?])
 
     # 7. Relative Strength Index (RSI)
     rsi_tmprd_arr = [6, 12, 36, 72, 108, 190, 288, 576, 720]
     rsi_base_clmn_name = 'rsi'
-    rsi_fin_func = tl.RSI
+    # rsi_fin_func = tl.RSI
 
     # 8. Commodity Channel Index (CCI)
     cci_tmprd_arr = [3, 6, 9, 12, 36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
     cci_base_clmn_name = 'cci'
-    cci_fin_func = tl.CCI
+    # cci_fin_func = tl.CCI
     # CCI(high, low, close[, timeperiod=?])
 
     # 9. Average Directional Moving Index (ADX)
     adx_tmprd_arr = [36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
     adx_base_clmn_name = 'adx'
-    adx_fin_func = tl.ADX
+    # adx_fin_func = tl.ADX
     # ADX(high, low, close[, timeperiod=?])
 
     # 10.1. Double Exponentially Smoothed Returns
     dema_tmprd_arr = [108, 190, 288, 576, 720, 864, 1152, 1440]
     dema_base_clmn_name = 'dema'
-    dema_fin_func = tl.DEMA
+    # dema_fin_func = tl.DEMA
 
     # 10.2. Triple Exponentially Smoothed Returns
     tema_tmprd_arr = [6, 12, 36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
     tema_base_clmn_name = 'tema'
-    tema_fin_func = tl.TEMA
+    # tema_fin_func = tl.TEMA
 
     # 11. Moving Average Convergence-Divergence (MACD)
     macd_params_arr = [(3, 6, 2), (6, 12, 4), (18, 36, 12), (36, 78, 26), (117, 234, 78)]
     macd_base_clmn_names = ['macd', 'macd_s', 'macd_h']
-    macd_fin_func = tl.MACD
+    # macd_fin_func = tl.MACD
     # MACD(real[, fastperiod=?, slowperiod=?, signalperiod=?])
     # Outputs: macd, macdsignal, macdhist
 
     # 12. Money Flow Index (MFI)
     mfi_tmprd_arr = [36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
     mfi_base_clmn_name = 'mfi'
-    mfi_fin_func = tl.MFI
+    # mfi_fin_func = tl.MFI
     # MFI(high, low, close, volume[, timeperiod=?])
     # Outputs: real
 
@@ -100,7 +100,7 @@ class FeaturesCalcClass:
     lr_tmprd_arr = [36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
     lr_mult_arr = [1.5, 2.5, 5.]
     lr_base_clmn_names = ['lr_uno', 'lr_duo']
-    lr_fin_func = tl.LINEARREG_SLOPE
+    # lr_fin_func = tl.LINEARREG_SLOPE
 
     def sharpe_ratio_feature(self, return_values):
         """
@@ -240,8 +240,9 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_ema)
             new_clmn_names = [self.ema_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.ema_fin_func, 'add_columns': new_clmn_names, 'shift': 0,
+            inp = {'df': df, 'function': tl.EMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_ema}
+            # print('ema_test: ', self.ema_fin_func(df['open'].values, tmprd_ema))
             df = processing.features_add(**inp)
 
             inp = (df, 'open', new_clmn_names[0], 'ema_open' + postfix)
@@ -367,7 +368,7 @@ class FeaturesCalcClass:
                 postfix = '_' + processing.digit_to_text(tmprd_bb) + '_' + processing.digit_to_text(d)
                 new_clmn_names = [name + postfix for name in self.bb_base_clmn_names]
                 print('new_clmn_names: ', new_clmn_names)
-                inp = {'df': df, 'function': self.bb_fin_func, 'add_columns': new_clmn_names,
+                inp = {'df': df, 'function': tl.BBANDS, 'add_columns': new_clmn_names,
                        'real': df['open'].values, 'timeperiod': tmprd_bb, 'nbdevup': nbdevup, 'nbdevdn': nbdevdn,
                        'matype': 0}
                 df = processing.features_add(**inp)
@@ -385,7 +386,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(param_so[0]) + '_' + processing.digit_to_text(param_so[1])
             new_clmn_names = [name + postfix for name in self.so_base_clmn_names]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.so_fin_func, 'add_columns': new_clmn_names, 'shift': 1,
+            inp = {'df': df, 'function': tl.STOCH, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'fastk_period': param_so[0], 'slowk_period': int(param_so[0] * self.so_k_slowk_period),
                    'slowd_period': param_so[1]}
@@ -402,7 +403,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_rsi)
             new_clmn_names = [self.rsi_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.rsi_fin_func, 'add_columns': new_clmn_names, 'shift': 0,
+            inp = {'df': df, 'function': tl.RSI, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_rsi}
             df = processing.features_add(**inp)
 
@@ -414,7 +415,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_cci)
             new_clmn_names = [self.cci_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.cci_fin_func, 'add_columns': new_clmn_names, 'shift': 1,
+            inp = {'df': df, 'function': tl.CCI, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'timeperiod': tmprd_cci}
             df = processing.features_add(**inp)
@@ -427,7 +428,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_adx)
             new_clmn_names = [self.adx_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.adx_fin_func, 'add_columns': new_clmn_names, 'shift': 1,
+            inp = {'df': df, 'function': tl.ADX, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'timeperiod': tmprd_adx}
             df = processing.features_add(**inp)
@@ -440,7 +441,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_dema)
             new_clmn_names = [self.dema_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.dema_fin_func, 'add_columns': new_clmn_names, 'shift': 0,
+            inp = {'df': df, 'function': tl.DEMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_dema}
             df = processing.features_add(**inp)
 
@@ -455,7 +456,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_tema)
             new_clmn_names = [self.tema_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.tema_fin_func, 'add_columns': new_clmn_names, 'shift': 0,
+            inp = {'df': df, 'function': tl.TEMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_tema}
             df = processing.features_add(**inp)
 
@@ -471,7 +472,7 @@ class FeaturesCalcClass:
                       + '_' + processing.digit_to_text(params_macd[1]) + '_' + processing.digit_to_text(params_macd[2])
             new_clmn_names = [name + postfix for name in self.macd_base_clmn_names]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.macd_fin_func, 'add_columns': new_clmn_names, 'shift': 0,
+            inp = {'df': df, 'function': tl.MACD, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'fastperiod': params_macd[0], 'slowperiod': params_macd[1],
                    'signalperiod': params_macd[2]}
             df = processing.features_add(**inp)
@@ -485,7 +486,7 @@ class FeaturesCalcClass:
             postfix = '_' + processing.digit_to_text(tmprd_mfi)
             new_clmn_names = [self.mfi_base_clmn_name + postfix]
             print('new_clmn_names: ', new_clmn_names)
-            inp = {'df': df, 'function': self.mfi_fin_func, 'add_columns': new_clmn_names, 'shift': 1,
+            inp = {'df': df, 'function': tl.MFI, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'volume': df['volume_aver'].values, 'timeperiod': tmprd_mfi}
             df = processing.features_add(**inp)
@@ -500,10 +501,10 @@ class FeaturesCalcClass:
                 new_clmn_names = [name + postfix for name in self.lr_base_clmn_names]
                 print('new_clmn_names: ', new_clmn_names)
                 tmprd_lr_1 = tmprd_lr
-                df[new_clmn_names[0]] = self.lr_fin_func(df['open'].values, timeperiod=tmprd_lr_1)
+                df[new_clmn_names[0]] = tl.LINEARREG_SLOPE(df['open'].values, timeperiod=tmprd_lr_1)
 
                 tmprd_lr_2 = int(tmprd_lr_1 * mult_lr)
-                df[new_clmn_names[1]] = self.lr_fin_func(df['open'].values, timeperiod=tmprd_lr_2)
+                df[new_clmn_names[1]] = tl.LINEARREG_SLOPE(df['open'].values, timeperiod=tmprd_lr_2)
 
                 inp = (df, new_clmn_names[0], new_clmn_names[1], 'lr_cmpr' + postfix)
                 df = processing.clmn_compare(*inp)
@@ -521,8 +522,8 @@ class FeaturesCalcClass:
         #---
 
         #---
-        print("Hurst calculation...")
-        data = self.run_hurst_calc(data, True)
+        # print("Hurst calculation...")
+        # data = self.run_hurst_calc(data, True)
         #---
         data = self.ema_calc(data)
         data = self.run_sharpe_calc(data)
