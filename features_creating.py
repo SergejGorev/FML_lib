@@ -15,9 +15,9 @@ import pickle
 class FeaturesCalcClass:
     #---
     num_threads = 16
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
+    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
     dump_pickle = True # dump data pickle
-    data_pickle_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.2.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
+    data_pickle_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
 
     #---
     # 1. Hurst exponent
@@ -123,7 +123,8 @@ class FeaturesCalcClass:
         std_ = np.std(return_values)
         # print("mean_= {1:.4f}, std_= {2:.4f}".format(mean_, std_))
         return_values_len = len(return_values)
-        if (std_ != 0.) & return_values_len != 0.:
+        # print('return_values_len= ', return_values_len)
+        if (std_ != 0.) & (return_values_len != 0.):
             res = mean_ / (std_ * return_values_len**0.5)
         else:
             res = 0.
@@ -522,8 +523,8 @@ class FeaturesCalcClass:
         #---
 
         #---
-        # print("Hurst calculation...")
-        # data = self.run_hurst_calc(data, True)
+        print("Hurst calculation...")
+        data = self.run_hurst_calc(data, True)
         #---
         data = self.ema_calc(data)
         data = self.run_sharpe_calc(data)
