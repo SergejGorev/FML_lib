@@ -59,8 +59,9 @@ class FeaturesSelectionClass:
         print('features_arr:\n', features_arr)
         return features_arr
 
+
     @staticmethod
-    def cv_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
+    def cross_val_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
                max_depth_=3, n_estimators_=100, n_jobs_=-1):
         res_dict = {}
         acc_arr = []

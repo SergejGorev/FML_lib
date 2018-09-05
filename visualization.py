@@ -3,7 +3,7 @@ import warnings
 import finfunctions
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, f1_score  #, accuracy_score
+from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from matplotlib import pyplot as plt
 
 
