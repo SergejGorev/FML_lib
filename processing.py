@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 def features_add(df, function, add_columns, shift=0, **params):
     """
     Функция для добавления признаков к датафрейму.
@@ -60,7 +63,13 @@ def clmn_compare(df, clmn_1, clmn_2, new_clmn_name):
     """
     #compare_func = lambda x: (x[clmn_2] - x[clmn_1]) / x[clmn_1]
     #df[new_clmn_name] = df.apply(compare_func, axis=1)
-    df[new_clmn_name] = (df[clmn_2] - df[clmn_1]) / df[clmn_1]
+    print('new_clmn_name= ', new_clmn_name)
+    # df['diff_clmn'] = df[clmn_2] - df[clmn_1]
+    # cmpr_func = lambda x: x['diff_clmn']/x[clmn_1] if (x[clmn_1] != 0.) else np.nan
+    # df[new_clmn_name] = df.apply(cmpr_func, axis=1)
+    # df.drop(columns='diff_clmn', inplace=True)
+    df[new_clmn_name] = (df[clmn_2] - df[clmn_1])/df[clmn_1]
+    df[new_clmn_name].replace([np.inf, -np.inf], np.nan, inplace=True)
 
     return df
 

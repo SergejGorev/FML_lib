@@ -55,7 +55,7 @@ class FeaturesSelectionClass:
         features_arr.append(data_lbl.columns[17])
         features_arr.append(data_lbl.columns[16])
         features_arr.extend(data_lbl.columns[24:last_clmn])
-        features_arr.remove('return')
+        # features_arr.remove('return')
         print('features_arr:\n', features_arr)
         return features_arr
 

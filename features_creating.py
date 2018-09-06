@@ -14,71 +14,85 @@ import pickle
 
 class FeaturesCalcClass:
     #---
-    num_threads = 16
+    num_threads = 8  # 16
     data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
     dump_pickle = True # dump data pickle
-    data_pickle_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.2.pickle"
+    data_pickle_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
 
     #---
     # 1. Hurst exponent
     # !!! Расчёт осуществляется очень долго!!!
     # Для нескольких проходов настоятельно рекомендуется использовать мультипоточность вне jupyter'а.
-    hurst_tmprd_arr = [72, 288, 432, 576, 720, 864, 1152, 1440]
+    hurst_tmprd_arr = [12, 18, 24, 36, 72, 288, 432, 576, 720, 864, 1152, 1440]
+    # hurst_compare_arr in the form of a tuple (timeperiod_1, timeperiod_2, lag)
+    hurst_compare_arr = [(12, 24, 10), (12, 36, 10), (12, 72, 10), (12, 288, 10), (36, 432, 25), (36, 576, 25),
+                         (36, 720, 25), (36, 864, 25), (36, 1152, 25), (36, 1440, 25)]
     hurst_max_lag_arr = [10, 25, 50]
     hurst_base_clmn_name = 'hurst'
 
     # 2. Exponential Moving Averages
-    ema_tmprd_arr = [6, 108, 288, 432, 576, 720]
+    ema_tmprd_arr = [6, 12, 18, 24, 36, 48, 60, 72, 108, 144, 288, 432, 576, 720]
+    ema_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     ema_base_clmn_name = 'ema'
     # ema_fin_func = tl.EMA
 
     # 3. Sharpe Ratio
-    sr_tmprd_arr = [108, 288, 576, 720, 1440]
+    sr_tmprd_arr = [6, 12, 18, 24, 36, 48, 60, 72, 108, 144, 288, 432, 576, 720, 1440]
+    sr_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     sr_base_clmn_name = 'sr'
     #sr_fin_func = finfunctions.sharpe_ratio_feature
 
     # 4. Accumulation/Distribution Index (ADI)
-    adi_tmprd_arr = [108, 288, 576, 720, 1440]
+    adi_tmprd_arr = [6, 12, 18, 24, 36, 48, 60, 72, 108, 144, 288, 432, 576, 720, 1440]
+    adi_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     adi_base_clmn_name = 'adi'
     #adi_fin_func = finfunctions.adi
 
     # 5. Bollinger Bands (BB)
-    bb_tmprd_arr = [72, 108, 190, 288, 576, 720]
-    bb_d_arr = [0.5, 1., 1.5, 2., 2.5, 3.]
+    bb_tmprd_arr = [6, 12, 18, 24, 36, 48, 60, 72, 108, 144, 288, 432, 576, 720, 1440]
+    bb_d_arr = [1., 2., 3.]
+    bb_compare_arr = [(6, 12, 1.), (6, 18, 1.), (6, 24, 1.), (6, 36, 1.), (6, 72, 1.), (6, 144, 1.), (6, 288, 1.),
+                      (6, 432, 1.), (6, 720, 1.)]
     bb_base_clmn_names = ['ubb', 'mbb', 'lbb']
     # bb_fin_func = tl.BBANDS
 
     # 6. Stochastic Oscillator
     so_param_arr = [(5, 2), (6, 3), (12, 3), (36, 2), (78, 2), (234, 2)]
     so_k_slowk_period = 0.5
+    so_compare_arr = [((5, 2), (12, 3)), ((5, 2), (36, 2)), ((5, 2), (234, 2))]
     so_base_clmn_names = ['so_k', 'so_d']
     # so_fin_func = tl.STOCH
     # STOCH(high, low, close[, fastk_period=?, slowk_period=?, slowk_matype=?, slowd_period=?, slowd_matype=?])
 
     # 7. Relative Strength Index (RSI)
-    rsi_tmprd_arr = [6, 12, 36, 72, 108, 190, 288, 576, 720]
+    rsi_tmprd_arr = [6, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720]
+    rsi_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     rsi_base_clmn_name = 'rsi'
     # rsi_fin_func = tl.RSI
 
     # 8. Commodity Channel Index (CCI)
-    cci_tmprd_arr = [3, 6, 9, 12, 36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
+    cci_tmprd_arr = [3, 6, 9, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720, 864, 1152, 1440]
+    cci_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     cci_base_clmn_name = 'cci'
     # cci_fin_func = tl.CCI
     # CCI(high, low, close[, timeperiod=?])
 
     # 9. Average Directional Moving Index (ADX)
-    adx_tmprd_arr = [36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
+    adx_tmprd_arr = [6, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720]
+    adx_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     adx_base_clmn_name = 'adx'
     # adx_fin_func = tl.ADX
     # ADX(high, low, close[, timeperiod=?])
 
     # 10.1. Double Exponentially Smoothed Returns
-    dema_tmprd_arr = [108, 190, 288, 576, 720, 864, 1152, 1440]
+    dema_tmprd_arr = [6, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720]
+    dema_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     dema_base_clmn_name = 'dema'
     # dema_fin_func = tl.DEMA
 
     # 10.2. Triple Exponentially Smoothed Returns
-    tema_tmprd_arr = [6, 12, 36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
+    tema_tmprd_arr = [6, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720]
+    tema_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     tema_base_clmn_name = 'tema'
     # tema_fin_func = tl.TEMA
 
@@ -90,7 +104,8 @@ class FeaturesCalcClass:
     # Outputs: macd, macdsignal, macdhist
 
     # 12. Money Flow Index (MFI)
-    mfi_tmprd_arr = [36, 72, 108, 190, 288, 576, 720, 864, 1152, 1440]
+    mfi_tmprd_arr = [6, 12, 18, 24, 36, 72, 108, 144, 190, 288, 432, 576, 720]
+    mfi_compare_arr = [(6, 12), (6, 18), (6, 24), (6, 36), (6, 72), (6, 144), (6, 288), (6, 432), (6, 720)]
     mfi_base_clmn_name = 'mfi'
     # mfi_fin_func = tl.MFI
     # MFI(high, low, close, volume[, timeperiod=?])
@@ -102,7 +117,13 @@ class FeaturesCalcClass:
     lr_base_clmn_names = ['lr_uno', 'lr_duo']
     # lr_fin_func = tl.LINEARREG_SLOPE
 
-    def sharpe_ratio_feature(self, return_values):
+    # 14. Return calc
+    rtrn_tmprd_arr = [2, 4, 6, 12, 18, 24, 36, 60, 72, 108, 144, 190, 288, 576, 720, 864, 1152, 1440]
+    rtrn_compare_arr = [(2, 4), (2, 6), (2, 12), (2, 24), (6, 36), (6, 72), (6, 144), (12, 288), (36, 1440)]
+    rtrn_base_clmn_name = 'rtrn'
+
+    @staticmethod
+    def sharpe_ratio_feature(return_values):
         """
         Calculate Sharpe Ratio for creating feature.
 
@@ -130,8 +151,8 @@ class FeaturesCalcClass:
             res = 0.
         return res
 
-
-    def adi(self, df, window, price_open_clmn, price_high_clmn, price_low_clmn, price_close_clmn, vol_clmn):
+    @staticmethod
+    def adi(df, window, price_open_clmn, price_high_clmn, price_low_clmn, price_close_clmn, vol_clmn):
         """
         Calculate Accumulation/Distribution Index (ADI).
 
@@ -177,6 +198,62 @@ class FeaturesCalcClass:
 
         df_calc['res'] = df_calc['clv'] * df_calc['vol_roll']
         return df_calc['res'].values
+
+
+    @staticmethod
+    def return_feature(prices_array):
+        """
+        Calculate return comparing the open prices.
+
+        Returns Return value.
+
+        Parameters
+        ----------
+        prices_array :  array
+            Prices array.
+
+        Returns
+        -------
+        return : float
+            Return value.
+        """
+        first_value = prices_array[0]
+        last_value = prices_array[-1]
+
+        res = (last_value - first_value)/first_value if (first_value != 0.) else 0.
+
+        return res
+
+
+    @staticmethod
+    def bb_price_position(df, prices_clmn, ubb_prices_clmn, mbb_prices_clmn, lbb_prices_clmn, new_column_name):
+        """
+        Calculate relative price position in the Bollinger Band's channel.
+
+        Returns relative price position.
+
+        Parameters
+        ----------
+        df : pandas DataFrame
+            DataFrame with prices and Bollinger band data.
+        prices_array :  string
+            Prices column name.
+        ubb_prices_array :  string
+            Column name of upper limit prices of Bollinger band.
+        mbb_prices_array :  string
+            Column name of medium limit prices of Bollinger band.
+        lbb_prices_array :  string
+            Column name of lower limit prices of Bollinger band.
+
+        Returns
+        -------
+        return : pandas DataFrame
+            DataFrame with new column with relative price position in  in the Bollinger Band's channel.
+        """
+        df[new_column_name] = (df[prices_clmn] - df[mbb_prices_clmn]) / ((df[ubb_prices_clmn] - df[lbb_prices_clmn]) / 2)
+        df[new_column_name].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        return df
 
 
     def hurst_calc(self, *args):
@@ -233,6 +310,15 @@ class FeaturesCalcClass:
         time_duration = time_finish - time_start
         print('hurst: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
+        for item in self.hurst_compare_arr:
+            clmn_1 = self.hurst_base_clmn_name + '_' + processing.digit_to_text(item[0]) + '_' + \
+                     processing.digit_to_text(item[2])
+            clmn_2 = self.hurst_base_clmn_name + '_' + processing.digit_to_text(item[1]) + '_' + \
+                     processing.digit_to_text(item[2])
+            new_clmn_name = self.hurst_base_clmn_name+'_cmpr_'+processing.digit_to_text(item[0])+'_'+ \
+                        processing.digit_to_text(item[1])+'_'+processing.digit_to_text(item[2])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
         return df
 
 
@@ -248,6 +334,13 @@ class FeaturesCalcClass:
 
             inp = (df, 'open', new_clmn_names[0], 'ema_open' + postfix)
             df = processing.clmn_compare(*inp)
+
+        for item in self.ema_compare_arr:
+            clmn_1 = self.ema_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.ema_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.ema_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         return df
 
@@ -291,9 +384,16 @@ class FeaturesCalcClass:
             print('type(res)= {0}, res= \n{1}'.format(type(res), res))
             clmn_name = res[0][0]
             print('res[1][1]: \n', res[1][1])
-            clmn_data = res[1][1].values
+            clmn_data = res[1][1]
             print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
             df[clmn_name] = clmn_data
+
+        for item in self.sr_compare_arr:
+            clmn_1 = self.sr_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.sr_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.sr_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         if dump_pickle:
             pckl = open(self.data_pickle_path_for_dump, "wb")
@@ -338,7 +438,7 @@ class FeaturesCalcClass:
             TASKS.append((df, new_clmn_names, tmprd_adi))
 
         #print('TASKS:\n', TASKS)
-        results = [pool.apply_async(self.sharpe_calc, t) for t in TASKS]
+        results = [pool.apply_async(self.adi_calc, t) for t in TASKS]
 
         for r in results:
             res = r.get()
@@ -346,9 +446,16 @@ class FeaturesCalcClass:
             print('type(res)= {0}, res= \n{1}'.format(type(res), res))
             clmn_name = res[0][0]
             print('res[1][1]: \n', res[1][1])
-            clmn_data = res[1][1].values
+            clmn_data = res[1][1]
             print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
             df[clmn_name] = clmn_data
+
+        for item in self.adi_compare_arr:
+            clmn_1 = self.adi_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.adi_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.adi_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         if dump_pickle:
             pckl = open(self.data_pickle_path_for_dump, "wb")
@@ -374,10 +481,20 @@ class FeaturesCalcClass:
                        'matype': 0}
                 df = processing.features_add(**inp)
 
-                inp = (df, 'open', new_clmn_names[0], 'ubb_open' + postfix)
-                df = processing.clmn_compare(*inp)
-                inp = (df, 'open', new_clmn_names[2], 'lbb_open' + postfix)
-                df = processing.clmn_compare(*inp)
+                new_clmn_name = 'bb_rp'+postfix
+                df = self.bb_price_position(df, 'open', new_clmn_names[0], new_clmn_names[1], new_clmn_names[2],
+                                            new_clmn_name)
+                # удаляем столбцы со значениями ubb, mbb, lbb. Остаётся только отн. положение цены в BB-канале.
+                df.drop(columns=new_clmn_names[0], inplace=True)
+                df.drop(columns=new_clmn_names[1], inplace=True)
+                df.drop(columns=new_clmn_names[2], inplace=True)
+
+        for item in self.bb_compare_arr:
+            clmn_1 = 'bb_rp' + '_' + processing.digit_to_text(item[0]) + '_' + processing.digit_to_text(item[2])
+            clmn_2 = 'bb_rp' + '_' + processing.digit_to_text(item[1]) + '_' + processing.digit_to_text(item[2])
+            new_clmn_name = 'bb_rp_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1]) + '_' + processing.digit_to_text(item[2])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         return df
 
@@ -396,6 +513,14 @@ class FeaturesCalcClass:
             inp = (df, new_clmn_names[0], new_clmn_names[1], 'so_k_d' + postfix)
             df = processing.clmn_compare(*inp)
 
+        for item in self.so_compare_arr:
+            clmn_1 = 'so_k' + '_' + processing.digit_to_text(item[0][0]) + '_' + processing.digit_to_text(item[0][1])
+            clmn_2 = 'so_k' + '_' + processing.digit_to_text(item[1][0]) + '_' + processing.digit_to_text(item[1][1])
+            new_clmn_name = 'so_k_cmpr_' + processing.digit_to_text(item[0][0]) + '_' + \
+                            processing.digit_to_text(item[0][1]) + '_' + processing.digit_to_text(item[1][0]) + '_' + \
+                            processing.digit_to_text(item[1][1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
         return df
 
 
@@ -407,6 +532,13 @@ class FeaturesCalcClass:
             inp = {'df': df, 'function': tl.RSI, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_rsi}
             df = processing.features_add(**inp)
+
+        for item in self.rsi_compare_arr:
+            clmn_1 = self.rsi_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.rsi_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.rsi_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         return df
 
@@ -421,6 +553,13 @@ class FeaturesCalcClass:
                    'timeperiod': tmprd_cci}
             df = processing.features_add(**inp)
 
+        for item in self.cci_compare_arr:
+            clmn_1 = self.cci_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.cci_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.cci_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
         return df
 
 
@@ -433,6 +572,13 @@ class FeaturesCalcClass:
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'timeperiod': tmprd_adx}
             df = processing.features_add(**inp)
+
+        for item in self.adx_compare_arr:
+            clmn_1 = self.adx_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.adx_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.adx_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         return df
 
@@ -449,6 +595,13 @@ class FeaturesCalcClass:
             inp = (df, 'open', new_clmn_names[0], 'dema_open' + postfix)
             df = processing.clmn_compare(*inp)
 
+        for item in self.dema_compare_arr:
+            clmn_1 = self.dema_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.dema_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.dema_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
         return df
 
 
@@ -463,6 +616,13 @@ class FeaturesCalcClass:
 
             inp = (df, 'open', new_clmn_names[0], 'tema_open' + postfix)
             df = processing.clmn_compare(*inp)
+
+        for item in self.tema_compare_arr:
+            clmn_1 = self.tema_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.tema_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.tema_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         return df
 
@@ -492,6 +652,13 @@ class FeaturesCalcClass:
                    'volume': df['volume_aver'].values, 'timeperiod': tmprd_mfi}
             df = processing.features_add(**inp)
 
+        for item in self.mfi_compare_arr:
+            clmn_1 = self.mfi_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.mfi_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.mfi_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
         return df
 
 
@@ -511,6 +678,25 @@ class FeaturesCalcClass:
                 df = processing.clmn_compare(*inp)
 
         return df
+
+
+    def return_calc(self, df):
+        for tmprd_rtrn in self.rtrn_tmprd_arr:
+            postfix = '_' + processing.digit_to_text(tmprd_rtrn)
+            new_clmn_names = [self.rtrn_base_clmn_name + postfix]
+            print('new_clmn_names: ', new_clmn_names)
+            df[new_clmn_names[0]] = df['open'].rolling(window=tmprd_rtrn, center=False).apply(
+                                                                        lambda x: self.return_feature(x))
+
+        for item in self.rtrn_compare_arr:
+            clmn_1 = self.rtrn_base_clmn_name + '_' + processing.digit_to_text(item[0])
+            clmn_2 = self.rtrn_base_clmn_name + '_' + processing.digit_to_text(item[1])
+            new_clmn_name = self.rtrn_base_clmn_name + '_cmpr_' + processing.digit_to_text(item[0]) + '_' + \
+                            processing.digit_to_text(item[1])
+            df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
+
+        return df
+
 
     def execute(self):
         #--- dataframe load
@@ -539,6 +725,7 @@ class FeaturesCalcClass:
         data = self.macd_calc(data)
         data = self.mfi_calc(data)
         data = self.lr_calc(data)
+        data = self.return_calc(data)
         # #---
 
         if self.dump_pickle:
