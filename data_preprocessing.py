@@ -14,7 +14,7 @@ class DataImportClass:
 
     def execute(self):
         # считываем M5-историю, создаём датафреймы и делаем дампы
-        symbol = pd.read_csv(history_ask_file, sep=';')
+        symbol = pd.read_csv(self.history_ask_file, sep=';')
         symbol.columns = ['Datetime', 'open_ask', 'high_ask', 'low_ask', 'close_ask', 'volume_ask']
         symbol['Datetime'] = symbol['Datetime'].apply(
                     lambda x: dt.datetime.strptime(x, "%Y.%m.%d %H:%M:%S"))
@@ -29,7 +29,7 @@ class DataImportClass:
         symbol['abs_change_h_ask'] = symbol['high_ask'] - symbol['open_ask']
         symbol['abs_change_l_ask'] = symbol['low_ask'] - symbol['open_ask']
         #---
-        symbol_bid = pd.read_csv(history_bid_file, sep=';')
+        symbol_bid = pd.read_csv(self.history_bid_file, sep=';')
         symbol_bid.columns = ['Datetime', 'open_bid', 'high_bid', 'low_bid', 'close_bid', 'volume_bid']
         symbol_bid['Datetime'] = symbol_bid['Datetime'].apply(
                     lambda x: dt.datetime.strptime(x, "%Y.%m.%d %H:%M:%S"))
