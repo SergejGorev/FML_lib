@@ -11,8 +11,8 @@ import warnings
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"
-    label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
     target_clmn = 'target_label_0i0025_1i0_1i0'
     postfix = '_0i0025_1i0_1i0'
     profit_value = 23
@@ -294,16 +294,16 @@ class FeaturesSelectionClass:
         del lbl
         self.testTimes = self.set_testTimes(dt0=self.dt0, dt1=self.dt1)
 
-        # self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
-        #                                            target_clmn=self.target_clmn)
+        self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+                                                   target_clmn=self.target_clmn)
 
         # ---
-        # загрузка датафрейма в тестовых целях
-        pckl = open(r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle", "rb")
-        data_for_ml = pickle.load(pckl)
-        pckl.close()
-        self.data_for_ml = data_for_ml
-        # ---
+        # # загрузка датафрейма в тестовых целях
+        # pckl = open(r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle", "rb")
+        # data_for_ml = pickle.load(pckl)
+        # pckl.close()
+        # self.data_for_ml = data_for_ml
+        # # ---
 
 
         self.features_selection(data_lbl)
