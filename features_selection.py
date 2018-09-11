@@ -145,7 +145,6 @@ class FeaturesSelectionClass:
         res_dict['f1_score_mean'] = f1_arr_mean
         res_dict['f1_score_std'] = f1_arr_std
         res_dict['f1_score_arr'] = str(f1_arr)
-        if print_log: print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
         # ---
         res_dict['conf_matrix_arr'] = str(conf_matrix_arr)
         # ---
@@ -153,7 +152,7 @@ class FeaturesSelectionClass:
             if print_log: print('\nrtrn_arr= ', rtrn_arr)
             rtrn_arr_mean = np.mean(rtrn_arr)
             rtrn_arr_std = np.std(rtrn_arr)
-            if print_log: print('rtrn_arr_mean= {0:.5f}, rtrn_arr_std= {1:.5f}'.format(rtrn_arr_mean, rtrn_arr_std))
+            if print_log: print('rtrn_arr_mean= {0:.2f}, rtrn_arr_std= {1:.2f}'.format(rtrn_arr_mean, rtrn_arr_std))
             res_dict['return_mean'] = rtrn_arr_mean
             res_dict['return_std'] = rtrn_arr_std
             res_dict['return_arr'] = str(rtrn_arr)
