@@ -6,15 +6,19 @@ import pickle
 from xgboost import XGBClassifier
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 import copy
+import warnings
 
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
-    features_part = 0.10  # доля признаков, участвующих в тестировании в каждом проходе
+    features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
     data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.3.pickle"
     label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
     target_clmn = 'target_label_0i0025_1i0_1i0'
+    postfix = '_0i0025_1i0_1i0'
+    profit_value = 23
+    loss_value = -25
     dump_pickle = True # dump data pickle
-    f_i_path_for_dump = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905_3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
+    f_i_path_for_dump = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180910.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905_3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -62,21 +66,29 @@ class FeaturesSelectionClass:
 
     @staticmethod
     def cross_val_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
-               max_depth_=3, n_estimators_=100, n_jobs_=-1, print_log=True):
+                      max_depth_=3, n_estimators_=100, n_jobs_=-1, calc_fin_stats=True, df_lbl=None,
+                      profit_value=0., loss_value=0., print_log=True):
         res_dict = {}
         acc_arr = []
         f1_arr = []
         conf_matrix_arr = []
         ftrs_imp_arr = []
-
+        if calc_fin_stats==True:
+            rtrn_arr = []
+            sr_arr = []
         test_periods_count = len(testTimes_)
         if print_log: print('test_periods_count= ', test_periods_count)
 
+        warnings.filterwarnings(action='ignore')
         for test in zip(testTimes_.index, testTimes_):
             if print_log: print('\ntest= {0}'.format(test))
             clf = XGBClassifier(max_depth=max_depth_, n_estimators=n_estimators_, n_jobs=n_jobs_)
 
-            df_test_iter = df_test_.loc[(test[0] <= df_test_.index) & (df_test_.index <= test[1]), :]
+            df_test_iter = df_test_
+            if ((calc_fin_stats==True) & (df_lbl is not None)):
+                df_test_iter['label_buy'] = df_lbl['label_buy']
+                df_test_iter['label_sell'] = df_lbl['label_sell']
+            df_test_iter = df_test_iter.loc[(test[0] <= df_test_.index) & (df_test_.index <= test[1]), :]
             df_train_iter = df_train_.loc[df_train_.index.difference(df_test_iter.index)]
 
             X_train_iter = df_train_iter.loc[:, features_for_ml_]
@@ -107,25 +119,53 @@ class FeaturesSelectionClass:
             if print_log:
                 for i, imp in enumerate(f_i_arr, 1):
                     print('{0}. {1:<30} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
+            #--- financial statistics calculation
+            y_pred_series = pd.Series(data=y_pred_iter, index=df_test_iter.index)
+            fin_res = finfunctions.pred_fin_res(y_pred=y_pred_series, label_buy=df_test_iter['label_buy'],
+                                                label_sell=df_test_iter['label_sell'], profit_value=profit_value,
+                                                loss_value=loss_value)
+            if calc_fin_stats:
+                rtrn_arr.append(fin_res[0])
+                sr_arr.append(fin_res[1])
+                if print_log:
+                    print('return= {0:.2f}, SR= {1:.4f}'.format(fin_res[0], fin_res[1]))
 
+            #---
         if print_log: print('\nacc_arr= ', acc_arr)
         acc_arr_mean = np.mean(acc_arr)
         acc_arr_std = np.std(acc_arr)
         if print_log: print('acc_arr_mean= {0:.5f}, acc_arr_std= {1:.5f}'.format(acc_arr_mean, acc_arr_std))
         res_dict['acc_score_mean'] = acc_arr_mean
         res_dict['acc_score_std'] = acc_arr_std
-        res_dict['acc_score_arr'] = acc_arr
+        res_dict['acc_score_arr'] = str(acc_arr)
         if print_log: print('\nf1_arr= ', f1_arr)
         f1_arr_mean = np.mean(f1_arr)
         f1_arr_std = np.std(f1_arr)
         if print_log: print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
         res_dict['f1_score_mean'] = f1_arr_mean
         res_dict['f1_score_std'] = f1_arr_std
-        res_dict['f1_score_arr'] = f1_arr
+        res_dict['f1_score_arr'] = str(f1_arr)
         if print_log: print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
         # ---
-        res_dict['conf_matrix_arr'] = conf_matrix_arr
+        res_dict['conf_matrix_arr'] = str(conf_matrix_arr)
         # ---
+        if calc_fin_stats:
+            if print_log: print('\nrtrn_arr= ', rtrn_arr)
+            rtrn_arr_mean = np.mean(rtrn_arr)
+            rtrn_arr_std = np.std(rtrn_arr)
+            if print_log: print('rtrn_arr_mean= {0:.5f}, rtrn_arr_std= {1:.5f}'.format(rtrn_arr_mean, rtrn_arr_std))
+            res_dict['return_mean'] = rtrn_arr_mean
+            res_dict['return_std'] = rtrn_arr_std
+            res_dict['return_arr'] = str(rtrn_arr)
+
+            if print_log: print('\nsharpe_arr= ', sr_arr)
+            sr_arr_mean = np.mean(sr_arr)
+            sr_arr_std = np.std(sr_arr)
+            if print_log: print('sharpe_mean= {0:.5f}, sharpe_std= {1:.5f}'.format(sr_arr_mean, sr_arr_std))
+            res_dict['sharpe_mean'] = sr_arr_mean
+            res_dict['sharpe_std'] = sr_arr_mean
+            res_dict['sharpe_arr'] = str(sr_arr)
+        #---
         # print('\nftrs_imp_arr:\n', ftrs_imp_arr)
         res_dict['ftrs_imp_arr'] = ftrs_imp_arr
 
@@ -139,7 +179,7 @@ class FeaturesSelectionClass:
                                                                               feature_arr, feature_arr_mean))
             features_imp_dict[feature_name] = feature_arr_mean
         res_dict['features_imp_dict'] = features_imp_dict
-
+        warnings.filterwarnings(action='default')
         return res_dict
 
 
@@ -155,12 +195,17 @@ class FeaturesSelectionClass:
         self.features_arr = self.setting_features_array(data_lbl, self.last_clmn)
         self.setting_features_count()
         # ---
-        df_columns = ['acc_score_mean', 'acc_score_std', 'acc_score_arr', 'f1_score_mean', 'f1_score_std', 'f1_score_arr']
+        df_columns = ['acc_score_mean', 'acc_score_std', 'acc_score_arr', 'f1_score_mean', 'f1_score_std', 'f1_score_arr',
+                      'conf_matrix_arr', 'return_mean', 'return_std', 'return_arr',
+                      'sharpe_mean', 'sharpe_std', 'sharpe_arr', 'features_imp_dict']
         df_columns.extend(self.features_arr)
         df_st = pd.DataFrame(index=np.arange(0, self.n_loops), columns=df_columns)
         # ---
         df_train = self.data_for_ml  # уменьшенное количество образцов за счёт отбора
         df_test = data_lbl  # все образцы
+        label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+        df_lbl = data_lbl.loc[:, [label_buy, label_sell]]
+        df_lbl.columns = ['label_buy', 'label_sell']
         # ---
         test_periods_count = len(self.testTimes)
         print('\ntest_periods_count= {0}'.format(test_periods_count))
@@ -186,65 +231,65 @@ class FeaturesSelectionClass:
 
             print('features_for_ml:\n', features_for_ml)
 
-            for test in zip(self.testTimes.index, self.testTimes):
-                print('\ntest= {0}'.format(test))
-                clf = XGBClassifier(max_depth=3, n_estimators=100, n_jobs=-1)
+            my_res = self.cross_val_xgb(df_train_=df_train, df_test_=df_test,
+                                        testTimes_=self.testTimes,
+                                        features_for_ml_=features_for_ml,
+                                        target_clmn_=self.target_clmn, max_depth_=3,
+                                        n_estimators_=100,
+                                        n_jobs_=-1, calc_fin_stats=True,
+                                        df_lbl=df_lbl, profit_value=self.profit_value,
+                                        loss_value=self.loss_value,
+                                        print_log=True)
+            # for test in zip(self.testTimes.index, self.testTimes):
+            #     print('\ntest= {0}'.format(test))
+            #     clf = XGBClassifier(max_depth=3, n_estimators=100, n_jobs=-1)
+            #
+            #     df_test_iter = df_test.loc[(test[0] <= df_test.index) & (df_test.index <= test[1]), :]
+            #     df_train_iter = df_train.loc[df_train.index.difference(df_test_iter.index)]
+            #
+            #     X_train_iter = df_train_iter.loc[:, features_for_ml]
+            #     y_train_iter = df_train_iter.loc[:, self.target_clmn]
+            #     X_test_iter = df_test_iter.loc[:, features_for_ml]
+            #     y_test_iter = df_test_iter.loc[:, self.target_clmn]
+            #
+            #     clf.fit(X_train_iter, y_train_iter)
+            #     y_pred_iter = clf.predict(X_test_iter)
+            #
+            #     acc = accuracy_score(y_test_iter, y_pred_iter)
+            #     print('accuracy= {0:.5f}'.format(acc))
+            #     acc_arr.append(acc)
+            #     f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
+            #     print('f1_score= {0:.5f}'.format(f1_scr))
+            #     f1_arr.append(f1_scr)
+            #     conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
+            #     print('\nconf_matrix:\n{}'.format(conf_matrix))
+            #
+            #     print("\nfeature_importances:")
+            #     f_i = list(zip(features_for_ml, clf.feature_importances_))
+            #     dtype = [('feature', 'S30'), ('importance', float)]
+            #     f_i_nd = np.array(f_i, dtype=dtype)
+            #     f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
+            #     f_i_arr = f_i_sort.tolist()
+            #     ftrs_imp_arr.append(f_i_arr)
+            #     for i, imp in enumerate(f_i_arr, 1):
+            #         print('{0}. {1:<20} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
 
-                df_test_iter = df_test.loc[(test[0] <= df_test.index) & (df_test.index <= test[1]), :]
-                df_train_iter = df_train.loc[df_train.index.difference(df_test_iter.index)]
+            df_st.loc[df_st.index == step, 'acc_score_mean'] = my_res['acc_score_mean']
+            df_st.loc[df_st.index == step, 'acc_score_std'] = my_res['acc_score_std']
+            df_st.loc[df_st.index == step, 'acc_score_arr'] = my_res['acc_score_arr']
+            df_st.loc[df_st.index == step, 'f1_score_mean'] = my_res['f1_score_mean']
+            df_st.loc[df_st.index == step, 'f1_score_std'] = my_res['f1_score_std']
+            df_st.loc[df_st.index == step, 'f1_score_arr'] = my_res['f1_score_arr']
 
-                X_train_iter = df_train_iter.loc[:, features_for_ml]
-                y_train_iter = df_train_iter.loc[:, self.target_clmn]
-                X_test_iter = df_test_iter.loc[:, features_for_ml]
-                y_test_iter = df_test_iter.loc[:, self.target_clmn]
+            df_st.loc[df_st.index == step, 'conf_matrix_arr'] = my_res['conf_matrix_arr']
+            df_st.loc[df_st.index == step, 'return_mean'] = my_res['return_mean']
+            df_st.loc[df_st.index == step, 'return_std'] = my_res['return_std']
+            df_st.loc[df_st.index == step, 'return_arr'] = my_res['return_arr']
+            df_st.loc[df_st.index == step, 'sharpe_mean'] = my_res['sharpe_mean']
+            df_st.loc[df_st.index == step, 'sharpe_std'] = my_res['sharpe_std']
+            df_st.loc[df_st.index == step, 'sharpe_arr'] = my_res['sharpe_arr']
 
-                clf.fit(X_train_iter, y_train_iter)
-                y_pred_iter = clf.predict(X_test_iter)
-
-                acc = accuracy_score(y_test_iter, y_pred_iter)
-                print('accuracy= {0:.5f}'.format(acc))
-                acc_arr.append(acc)
-                f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
-                print('f1_score= {0:.5f}'.format(f1_scr))
-                f1_arr.append(f1_scr)
-                conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
-                print('\nconf_matrix:\n{}'.format(conf_matrix))
-
-                print("\nfeature_importances:")
-                f_i = list(zip(features_for_ml, clf.feature_importances_))
-                dtype = [('feature', 'S30'), ('importance', float)]
-                f_i_nd = np.array(f_i, dtype=dtype)
-                f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
-                f_i_arr = f_i_sort.tolist()
-                ftrs_imp_arr.append(f_i_arr)
-                for i, imp in enumerate(f_i_arr, 1):
-                    print('{0}. {1:<20} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
-
-            print('\nacc_arr= ', acc_arr)
-            acc_arr_mean = np.mean(acc_arr)
-            acc_arr_std = np.std(acc_arr)  # *len(acc_arr)**-.5
-            print('acc_arr_mean= {0:.5f}, acc_arr_std= {1:.5f}'.format(acc_arr_mean, acc_arr_std))
-            df_st.loc[df_st.index == step, 'acc_score_mean'] = acc_arr_mean
-            df_st.loc[df_st.index == step, 'acc_score_std'] = acc_arr_std
-            df_st.loc[df_st.index == step, 'acc_score_arr'] = str(acc_arr)
-            print('\nf1_arr= ', f1_arr)
-            f1_arr_mean = np.mean(f1_arr)
-            f1_arr_std = np.std(f1_arr)  # *len(f1_arr)**-.5
-            print('f1_arr_mean= {0:.5f}, f1_arr_std= {1:.5f}'.format(f1_arr_mean, f1_arr_std))
-            df_st.loc[df_st.index == step, 'f1_score_mean'] = f1_arr_mean
-            df_st.loc[df_st.index == step, 'f1_score_std'] = f1_arr_std
-            df_st.loc[df_st.index == step, 'f1_score_arr'] = str(f1_arr)
-
-            print('\nftrs_imp_arr:\n', ftrs_imp_arr)
-            for i in range(len(ftrs_imp_arr[0])):
-                feature_name = ftrs_imp_arr[0][i][0]
-                feature_name = str(feature_name).replace("b'", "").replace("'", "")
-                feature_arr = [ftrs_imp_arr[my_iter][i][1] for my_iter in range(test_periods_count)]
-                feature_arr_mean = np.mean(feature_arr)
-                print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
-                                                                                  feature_arr, feature_arr_mean))
-                df_st.loc[df_st.index == step, feature_name] = feature_arr_mean
-
+            df_st.loc[df_st.index == step, 'features_imp_dict'] = my_res['features_imp_dict']
             # сохранение дампа
             pckl = open(self.f_i_path_for_dump, "wb")
             pickle.dump(df_st, pckl)
@@ -281,8 +326,19 @@ class FeaturesSelectionClass:
         del data
         del lbl
         self.testTimes = self.set_testTimes(dt0=self.dt0, dt1=self.dt1)
-        self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
-                                                   target_clmn=self.target_clmn)
+
+        # self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+        #                                            target_clmn=self.target_clmn)
+
+        # ---
+        # загрузка датафрейма в тестовых целях
+        pckl = open(r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle", "rb")
+        data_for_ml = pickle.load(pckl)
+        pckl.close()
+        self.data_for_ml = data_for_ml
+        # ---
+
+
         self.features_selection(data_lbl)
         #---
 

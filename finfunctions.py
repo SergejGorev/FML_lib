@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+import pickle
 
 
 def test_func(*args):
@@ -82,6 +83,72 @@ def sharpe_ratio(datetime_values, return_values):
     # print("sqrt_= {0:.4f}, mean_= {1:.4f}, std_= {2:.4f}".format(sqrt_, mean_, std_))
     res = sqrt_ * mean_ / std_
     return res
+
+
+def pred_fin_res(y_pred, label_buy, label_sell, profit_value, loss_value):
+    """
+    Calculate return and Sharpe Ratio (classical algorythm with everyday return).
+
+    Returns Return and Sharpe Ratio values.
+
+    Parameters
+    ----------
+    y_pred : pandas.Series
+        Array with predicted labels {-1, 0, 1}. The index of the series is the date.
+    label_buy : pandas.Series
+        Array with buy labels {-1, 1}. -1 means that stop loss is triggered. +1 means that take profit is triggered.
+    label_sell : pandas.Series
+        Array with buy labels {-1, 1}. -1 means that stop loss is triggered. +1 means that take profit is triggered.
+    profit_value : float value.
+        The size of the profit in the case of triggering the take profit.
+    loss_value : float value.
+        The size of the loss in the case of triggering the stop loss.
+
+    Returns
+    -------
+    sharpe_ratio : float
+        Sharpe ratio value.
+
+    """
+    return_df_ = pd.DataFrame(y_pred, columns=['pred'])
+    return_df_['date'] = return_df_.index
+    return_df_['dt_date'] = return_df_['date'].dt.date
+    return_df_['label_buy'] = label_buy
+    return_df_['label_sell'] = label_sell
+
+    def return_func(row):
+        res = 0.
+        if row['pred'] == 1:
+            if row['label_buy'] == 1:
+                res = profit_value
+            else:
+                res = loss_value
+        elif row['pred'] == -1:
+            if row['label_sell'] == 1:
+                res = profit_value
+            else:
+                res = loss_value
+        return res
+
+    return_df_['return'] = return_df_.apply(func=return_func, axis=1)
+    # print(return_df_)
+    #---
+    # сохранение дампа датафрейма в тестовых целях
+    pckl = open("return_df_.pickle", "wb")
+    pickle.dump(return_df_, pckl)
+    pckl.close()
+    #---
+    return_res = return_df_['return'].sum()
+    day_returns = return_df_.loc[:, ['dt_date', 'return']].groupby('dt_date').sum()
+    # print(day_returns)
+    day_returns_values = day_returns.values
+    # print(day_returns_values)
+    sqrt_ = np.sqrt(len(day_returns_values))
+    mean_ = np.mean(day_returns_values)
+    std_ = np.std(day_returns_values)  # np.max(np.std(day_returns_values), 0.01)
+    # print("sqrt_= {0:.4f}, mean_= {1:.4f}, std_= {2:.4f}".format(sqrt_, mean_, std_))
+    sr_res = sqrt_ * mean_ / std_
+    return return_res, sr_res
 
 
 def sharpe_ratio_feature(*return_values):
