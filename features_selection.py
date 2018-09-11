@@ -240,39 +240,6 @@ class FeaturesSelectionClass:
                                         df_lbl=df_lbl, profit_value=self.profit_value,
                                         loss_value=self.loss_value,
                                         print_log=True)
-            # for test in zip(self.testTimes.index, self.testTimes):
-            #     print('\ntest= {0}'.format(test))
-            #     clf = XGBClassifier(max_depth=3, n_estimators=100, n_jobs=-1)
-            #
-            #     df_test_iter = df_test.loc[(test[0] <= df_test.index) & (df_test.index <= test[1]), :]
-            #     df_train_iter = df_train.loc[df_train.index.difference(df_test_iter.index)]
-            #
-            #     X_train_iter = df_train_iter.loc[:, features_for_ml]
-            #     y_train_iter = df_train_iter.loc[:, self.target_clmn]
-            #     X_test_iter = df_test_iter.loc[:, features_for_ml]
-            #     y_test_iter = df_test_iter.loc[:, self.target_clmn]
-            #
-            #     clf.fit(X_train_iter, y_train_iter)
-            #     y_pred_iter = clf.predict(X_test_iter)
-            #
-            #     acc = accuracy_score(y_test_iter, y_pred_iter)
-            #     print('accuracy= {0:.5f}'.format(acc))
-            #     acc_arr.append(acc)
-            #     f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
-            #     print('f1_score= {0:.5f}'.format(f1_scr))
-            #     f1_arr.append(f1_scr)
-            #     conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
-            #     print('\nconf_matrix:\n{}'.format(conf_matrix))
-            #
-            #     print("\nfeature_importances:")
-            #     f_i = list(zip(features_for_ml, clf.feature_importances_))
-            #     dtype = [('feature', 'S30'), ('importance', float)]
-            #     f_i_nd = np.array(f_i, dtype=dtype)
-            #     f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
-            #     f_i_arr = f_i_sort.tolist()
-            #     ftrs_imp_arr.append(f_i_arr)
-            #     for i, imp in enumerate(f_i_arr, 1):
-            #         print('{0}. {1:<20} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
 
             df_st.loc[df_st.index == step, 'acc_score_mean'] = my_res['acc_score_mean']
             df_st.loc[df_st.index == step, 'acc_score_std'] = my_res['acc_score_std']
