@@ -133,11 +133,11 @@ def pred_fin_res(y_pred, label_buy, label_sell, profit_value, loss_value):
     return_df_['return'] = return_df_.apply(func=return_func, axis=1)
     # print(return_df_)
     #---
-    # сохранение дампа датафрейма в тестовых целях
-    pckl = open("return_df_.pickle", "wb")
-    pickle.dump(return_df_, pckl)
-    pckl.close()
-    #---
+    # # сохранение дампа датафрейма в тестовых целях
+    # pckl = open("return_df_.pickle", "wb")
+    # pickle.dump(return_df_, pckl)
+    # pckl.close()
+    # #---
     return_res = return_df_['return'].sum()
     day_returns = return_df_.loc[:, ['dt_date', 'return']].groupby('dt_date').sum()
     # print(day_returns)
