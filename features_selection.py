@@ -242,7 +242,7 @@ class FeaturesSelectionClass:
                                         loss_value=self.loss_value,
                                         print_log=True)
 
-            print('my_res:\n', my_res)
+            # print('my_res:\n', my_res)
 
             df_st.loc[df_st.index == step, 'acc_score_mean'] = my_res['acc_score_mean']
             df_st.loc[df_st.index == step, 'acc_score_std'] = my_res['acc_score_std']
