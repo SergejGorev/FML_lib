@@ -16,9 +16,9 @@ class FeaturesSelectionClass:
     target_clmn = 'target_label_0i0025_1i0_1i0'
     postfix = '_0i0025_1i0_1i0'
     profit_value = 23
-    loss_value = -25
+    loss_value = -25 #-25
     dump_pickle = True # dump data pickle
-    f_i_path_for_dump = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180910.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180905_3.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
+    f_i_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180912_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -168,15 +168,17 @@ class FeaturesSelectionClass:
         # print('\nftrs_imp_arr:\n', ftrs_imp_arr)
         res_dict['ftrs_imp_arr'] = ftrs_imp_arr
 
+        if print_log: print()
         features_imp_dict = {}
         for i in range(len(ftrs_imp_arr[0])):
             feature_name = ftrs_imp_arr[0][i][0]
             feature_name = str(feature_name).replace("b'", "").replace("'", "")
             feature_arr = [ftrs_imp_arr[my_iter][i][1] for my_iter in range(test_periods_count)]
             feature_arr_mean = np.mean(feature_arr)
-            if print_log: print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
-                                                                              feature_arr, feature_arr_mean))
+            # if print_log: print('feature_name= {0}, feature_arr= {1}, mean= {2:.5f}'.format(feature_name,
+            #                                                                   feature_arr, feature_arr_mean))
             features_imp_dict[feature_name] = feature_arr_mean
+        print('features_imp_dict:\n', features_imp_dict)
         res_dict['features_imp_dict'] = features_imp_dict
         warnings.filterwarnings(action='default')
         return res_dict
@@ -240,6 +242,8 @@ class FeaturesSelectionClass:
                                         loss_value=self.loss_value,
                                         print_log=True)
 
+            print('my_res:\n', my_res)
+
             df_st.loc[df_st.index == step, 'acc_score_mean'] = my_res['acc_score_mean']
             df_st.loc[df_st.index == step, 'acc_score_std'] = my_res['acc_score_std']
             df_st.loc[df_st.index == step, 'acc_score_arr'] = my_res['acc_score_arr']
@@ -255,7 +259,13 @@ class FeaturesSelectionClass:
             df_st.loc[df_st.index == step, 'sharpe_std'] = my_res['sharpe_std']
             df_st.loc[df_st.index == step, 'sharpe_arr'] = my_res['sharpe_arr']
 
-            df_st.loc[df_st.index == step, 'features_imp_dict'] = my_res['features_imp_dict']
+            features_imp_dict = my_res['features_imp_dict']
+            df_st.loc[df_st.index == step, 'features_imp_dict'] = str(features_imp_dict)
+
+            #---
+            for item in features_imp_dict.items():
+                df_st.loc[df_st.index == step, item[0]] = item[1]
+            #---
             # сохранение дампа
             pckl = open(self.f_i_path_for_dump, "wb")
             pickle.dump(df_st, pckl)
@@ -296,9 +306,9 @@ class FeaturesSelectionClass:
         self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
                                                    target_clmn=self.target_clmn)
 
-        # ---
+        # # ---
         # # загрузка датафрейма в тестовых целях
-        # pckl = open(r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle", "rb")
+        # pckl = open(r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_1.0.pickle", "rb")
         # data_for_ml = pickle.load(pckl)
         # pckl.close()
         # self.data_for_ml = data_for_ml
