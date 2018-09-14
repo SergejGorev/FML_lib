@@ -1,12 +1,18 @@
+import features_selection, finfunctions
 import numpy as np
+import pandas as pd
 from scipy.special import comb
 import math
 import copy
 import pickle
+import datetime as dt
 from sklearn.ensemble import VotingClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+import warnings
 
 class EnsembleClass:
-    n_classifier = 21
+    n_classifiers = 21
     n_features_in_clf = 30
     major_features_part = 0.3
     major_features_arr = \
@@ -212,10 +218,35 @@ class EnsembleClass:
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
 
+    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    target_clmn = 'target_label_0i0025_1i0_1i0'
+    postfix = '_0i0025_1i0_1i0'
+    profit_value = 23
+    loss_value = -25 #-25
+    dump_ensemble_pickle = True # dump ensemble pickle
+    ensemble_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
+    data_for_ml_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
+    ens_ftrs_arr_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
+    ens_clf_arr_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
+    ens_pred_df_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
+    ens_pred_statcs_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+
+    price_step = 0.001
+    train_start = dt.datetime(2005, 1, 1, 0, 0)
+    test_start = dt.datetime(2017, 7, 1, 0, 0)
+
+
+    data_for_ml = None
+    df_train = None
+    df_test = None
+
     clf_arr = []
+    ens_ftrs_arr = None
+    ens_clf = None  # ensemble classifier
 
     @staticmethod
-    def ensemble_accuracy(n_classifier, accuracy):
+    def ensemble_accuracy(n_classifiers, accuracy):
         """
         The function calculates ensemble accuracy based on the values of the basic accuracy of individual classifiers.
 
@@ -223,7 +254,7 @@ class EnsembleClass:
 
         Parameters
         ----------
-        n_classifier :  integer
+        n_classifiers :  integer
             The number of individual classifiers.
         accuracy :  float
             The basic accuracy of individual classifiers.
@@ -233,21 +264,21 @@ class EnsembleClass:
         ensemble_accuracy : float
             Ensemble accuracy value.
         """
-        k_start = int(math.ceil(n_classifier / 2.0))
-        probs = [comb(n_classifier, k) *
+        k_start = int(math.ceil(n_classifiers / 2.0))
+        probs = [comb(n_classifiers, k) *
                  accuracy**k *
-                 (1 - accuracy)**(n_classifier - k)
-                 for k in range(k_start, n_classifier + 1)]
+                 (1 - accuracy)**(n_classifiers - k)
+                 for k in range(k_start, n_classifiers + 1)]
         return sum(probs)
 
 
     @staticmethod
-    def feat_distr(n_classifier, n_features_in_clf, major_features_part, major_features_arr, minor_features_arr,
+    def feat_distr(n_classifiers, n_features_in_clf, major_features_part, major_features_arr, minor_features_arr,
                    print_log=False, save_dump=False, dump_file_path=r'ensemble_features_array.pickle'):
         """
         Function for features distribution between the classifiers.
 
-        :param n_classifier: integer.
+        :param n_classifiers: integer.
             The number of basic classifiers.
         :param n_features_in_clf: integer.
             The number of features in basic classifier.
@@ -265,10 +296,10 @@ class EnsembleClass:
             Dump file path.
 
         :return:
-            Array of size (n_classifier, n_features_in_clf) of features for basic classifiers.
+            Array of size (n_classifiers, n_features_in_clf) of features for basic classifiers.
         """
         feat_arr = []
-        for i in range(n_classifier):
+        for i in range(n_classifiers):
             features_set = []
             features_for_select = copy.deepcopy(major_features_arr)
             n_major_feat = int(n_features_in_clf*major_features_part)
@@ -305,24 +336,196 @@ class EnsembleClass:
         if print_log: print('feat_arr shape= [{0}, {1}]'.format(len(feat_arr), len(feat_arr[0])))
         #--- array dumping
         if save_dump:
-            pckl = open(dump_file_path, "wb")
-            pickle.dump(feat_arr, pckl)
-            pckl.close()
+            with open(dump_file_path, "wb") as pckl:
+                pickle.dump(feat_arr, pckl)
+                pckl.close()
             print('\nFeatures array dump (\'{0}\') is saved.'.format(dump_file_path))
         #---
         return feat_arr
 
 
+    def data_preparation(self, use_data_for_ml_dump=False, save_data_for_ml_dump=False):
+        # --- dataframe load
+        time_start = dt.datetime.now()
+        print('time_start= {}'.format(time_start))
+
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+            pckl.close()
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+            #--- replacing column names
+            label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+            lbl['label_buy'] = lbl[label_buy]
+            lbl['label_sell'] = lbl[label_sell]
+            lbl.drop(columns=[label_buy, label_sell], inplace=True)
+            #---
+            pckl.close()
+        print('lbl.shape: ', lbl.shape)
+
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        self.last_clmn = data.shape[1]
+        print('self.last_clmn= ', self.last_clmn)
+        print('last 5 columns: ', data_lbl.columns[self.last_clmn - 5: self.last_clmn])
+        # ---
+        del data
+        del lbl
+
+        if use_data_for_ml_dump:
+            # ---
+            # загрузка датафрейма в тестовых целях
+            with open(self.data_for_ml_pickle_path, "rb") as pckl:
+                data_for_ml = pickle.load(pckl)
+                pckl.close()
+            self.data_for_ml = data_for_ml
+            # ---
+        else:
+            self.data_for_ml = features_selection.FeaturesSelectionClass.select_data_for_ml(
+                                    data_lbl=data_lbl, price_step=self.price_step, target_clmn=self.target_clmn)
+
+        if save_data_for_ml_dump:
+            with open(self.data_for_ml_pickle_path, "wb") as pckl:
+                pickle.dump(self.data_for_ml, pckl)
+                pckl.close()
+
+        df_test = data_lbl
+        df_train = self.data_for_ml
+        self.df_test = df_test.loc[df_test.index >= self.test_start, :]
+        del df_test
+        del data_lbl
+        self.df_train = df_train.loc[(df_train.index>=self.train_start) & (df_train.index<=self.test_start), :]
+        del df_train
+
+
+    def ensemble_fit(self, n_classifiers, df_train, max_depth=3, n_estimators=100, n_jobs=-1,
+                     use_ens_ftrs_arr_dump=False, save_ens_clf_arr=True, print_log=True):
+        """
+        Create ensemble of fitted classifiers.
+
+        :return:
+            None
+        """
+        #--- data preparation
+        self.data_preparation()
+        #--- features loading
+        if use_ens_ftrs_arr_dump:
+            with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
+                self.ens_ftrs_arr = pickle.load(pckl)
+                pckl.close()
+        else:
+            self.ens_ftrs_arr = self.feat_distr(n_classifiers=self.n_classifiers, n_features_in_clf=self.n_features_in_clf,
+                            major_features_part=self.major_features_part, major_features_arr=self.major_features_arr,
+                            minor_features_arr=self.minor_features_arr, print_log=False, save_dump=True,
+                            dump_file_path=self.ens_ftrs_arr_pickle_path)
+        #---
+        #--- classifiers training cycle
+        basic_clf = XGBClassifier(max_depth=max_depth, n_estimators=n_estimators, n_jobs=n_jobs)
+
+        for i in range(n_classifiers):
+            features_for_ml = self.ens_ftrs_arr[i]
+            X_train_iter = df_train.loc[:, features_for_ml]
+            y_train_iter = df_train.loc[:, self.target_clmn]
+
+            basic_clf.fit(X_train_iter, y_train_iter)
+            clf_copy = copy.deepcopy(basic_clf)
+            self.clf_arr.append(clf_copy)
+            #---
+        if save_ens_clf_arr:
+            with open(self.ens_clf_arr_pickle_path, "wb") as pckl:
+                pickle.dump(self.clf_arr, pckl)
+                pckl.close()
+        #---
+
+
+    def ensemble_predict(self, n_classifiers, df_test, use_ens_clf_arr_dump=False, save_pred_df=True,
+                         save_pred_statistics=True, print_log=True):
+        if self.ens_ftrs_arr is None:
+            with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
+                self.ens_ftrs_arr = pickle.load(pckl)
+                pckl.close()
+            if print_log: print('\nens_ftrs_arr has been loaded.')
+
+        if (self.clf_arr is None) or use_ens_clf_arr_dump:
+            with open(self.ens_clf_arr_pickle_path, "rb") as pckl:
+                self.ens_clf = pickle.load(pckl)
+                pckl.close()
+            if print_log: print('\nens_clf has been loaded.')
+
+        df_pred = pd.DataFrame(index=df_test.index)
+        acc_arr = []
+        f1_arr = []
+        conf_matrix_arr = []
+        ftrs_imp_arr = []
+        rtrn_arr = []
+        sr_arr = []
+        for i in range(n_classifiers):
+            features_for_ml = self.ens_ftrs_arr[i]
+            X_test_iter = df_test.loc[:, features_for_ml]
+            y_test_iter = df_test.loc[:, self.target_clmn]
+
+            clf = self.ens_clf[i]
+
+            y_pred_iter = clf.predict(X_test_iter)
+            df_pred['pred_'+str(i)] = y_pred_iter
+
+            acc = accuracy_score(y_test_iter, y_pred_iter)
+            if print_log: print('accuracy= {0:.5f}'.format(acc))
+            acc_arr.append(acc)
+            f1_scr = f1_score(y_test_iter, y_pred_iter, average='weighted')
+            if print_log: print('f1_score= {0:.5f}'.format(f1_scr))
+            f1_arr.append(f1_scr)
+            conf_matrix = confusion_matrix(y_test_iter, y_pred_iter)
+            if print_log: print('\nconf_matrix:\n{}'.format(conf_matrix))
+            conf_matrix_arr.append(conf_matrix)
+
+            if print_log: print("\nfeature_importances:")
+            f_i = list(zip(features_for_ml, clf.feature_importances_))
+            dtype = [('feature', 'S30'), ('importance', float)]
+            f_i_nd = np.array(f_i, dtype=dtype)
+            f_i_sort = np.sort(f_i_nd, order='feature')  # f_i_sort = np.sort(f_i_nd, order='importance')[::-1]
+            f_i_arr = f_i_sort.tolist()
+            ftrs_imp_arr.append(f_i_arr)
+            if print_log:
+                for i, imp in enumerate(f_i_arr, 1):
+                    print('{0}. {1:<30} {2:.5f}'.format(i, str(imp[0]).replace("b\'", "").replace("\'", ""), imp[1]))
+            # --- financial statistics calculation
+            y_pred_series = pd.Series(data=y_pred_iter, index=self.df_test.index)
+            fin_res = finfunctions.pred_fin_res(y_pred=y_pred_series, label_buy=self.df_test['label_buy'],
+                                                label_sell=self.df_test['label_sell'], profit_value=self.profit_value,
+                                                loss_value=self.loss_value)
+            rtrn_arr.append(fin_res[0])
+            sr_arr.append(fin_res[1])
+            if print_log:
+                print('return= {0:.2f}, SR= {1:.4f}'.format(fin_res[0], fin_res[1]))
+                print('-------------------------------------------------------------------------------\n')
+        if save_pred_df:
+            with open(self.ens_pred_df_pickle_path, "wb") as pckl:
+                pickle.dump(df_pred, pckl)
+                pckl.close()
+        if save_pred_statistics:
+            pred_statcs_df = pd.DataFrame(data=list(zip(acc_arr, f1_arr, rtrn_arr, sr_arr, conf_matrix_arr,
+                                        ftrs_imp_arr)), columns=['accuracy', 'f1', 'return', 'sharpe', 'conf_matrix',
+                                                                 'ftrs_importance'])
+            if print_log: print('pred_statcs_df:\n', pred_statcs_df)
+            with open(self.ens_pred_statcs_pickle_path, "wb") as pckl:
+                pickle.dump(pred_statcs_df, pckl)
+                pckl.close()
+
+
 if __name__ == '__main__':
     # #--- расчёт требуемого количества классификаторов в ансамбле
-    # n_classifier = 21
+    # n_classifiers = 21
     # basic_accuracy = 0.53
-    # ens_acc = EnsembleClass.ensemble_accuracy(n_classifier=n_classifier, accuracy=basic_accuracy)
-    # print('\nEnsemble accuracy for {0} classifiers with basic accuracy {1:.4f} = {2:.4f}'.format(n_classifier,
+    # ens_acc = EnsembleClass.ensemble_accuracy(n_classifiers=n_classifiers, accuracy=basic_accuracy)
+    # print('\nEnsemble accuracy for {0} classifiers with basic accuracy {1:.4f} = {2:.4f}'.format(n_classifiers,
     #                                                                                             basic_accuracy, ens_acc))
     # #---
     req = EnsembleClass()
-    feat_arr = req.feat_distr(n_classifier=req.n_classifier, n_features_in_clf=req.n_features_in_clf,
+    feat_arr = req.feat_distr(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
                               major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
                               minor_features_arr=req.minor_features_arr, print_log=False, save_dump=True)
     print("\nfeat_arr:\n", feat_arr)

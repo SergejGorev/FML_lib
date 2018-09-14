@@ -21,8 +21,8 @@ class FeaturesSelectionClass:
     f_i_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180912_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
 
     price_step = 0.001
-    train_start = dt.datetime(2005, 1, 1, 0, 0)
-    test_start = dt.datetime(2017, 7, 1, 0, 0)
+    # train_start = dt.datetime(2005, 1, 1, 0, 0)
+    # test_start = dt.datetime(2017, 7, 1, 0, 0)
     dt0 = [dt.datetime(2009, 7, 1), dt.datetime(2011, 7, 1), dt.datetime(2013, 7, 1), dt.datetime(2015, 7, 1),
            dt.datetime(2017, 7, 1)]
     dt1 = [dt.datetime(2010, 6, 15), dt.datetime(2012, 6, 15), dt.datetime(2014, 6, 15), dt.datetime(2016, 6, 15),
@@ -73,7 +73,7 @@ class FeaturesSelectionClass:
         f1_arr = []
         conf_matrix_arr = []
         ftrs_imp_arr = []
-        if calc_fin_stats==True:
+        if calc_fin_stats:
             rtrn_arr = []
             sr_arr = []
         test_periods_count = len(testTimes_)
@@ -314,7 +314,7 @@ class FeaturesSelectionClass:
         # self.data_for_ml = data_for_ml
         # # ---
 
-
+        #---
         self.features_selection(data_lbl)
         #---
 
