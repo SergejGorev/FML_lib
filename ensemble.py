@@ -218,19 +218,19 @@ class EnsembleClass:
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
 
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
-    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+    label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
     target_clmn = 'target_label_0i0025_1i0_1i0'
     postfix = '_0i0025_1i0_1i0'
     profit_value = 23
     loss_value = -25 #-25
     dump_ensemble_pickle = True # dump ensemble pickle
-    ensemble_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
-    data_for_ml_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
-    ens_ftrs_arr_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
-    ens_clf_arr_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
-    ens_pred_df_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
-    ens_pred_statcs_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+    ensemble_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
+    data_for_ml_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
+    ens_ftrs_arr_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
+    ens_clf_arr_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
+    ens_pred_df_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
+    ens_pred_statcs_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -273,8 +273,9 @@ class EnsembleClass:
 
 
     @staticmethod
-    def feat_distr(n_classifiers, n_features_in_clf, major_features_part, major_features_arr, minor_features_arr,
-                   print_log=False, save_dump=False, dump_file_path=r'ensemble_features_array.pickle'):
+    def features_distribution(n_classifiers, n_features_in_clf, major_features_part, major_features_arr,
+                              minor_features_arr, save_dump=False,
+                              dump_file_path=r'ensemble_features_array.pickle', print_log=False):
         """
         Function for features distribution between the classifiers.
 
@@ -344,15 +345,15 @@ class EnsembleClass:
         return feat_arr
 
 
-    def data_preparation(self, use_data_for_ml_dump=False, save_data_for_ml_dump=False):
+    def data_preparation(self, use_data_for_ml_dump=False, save_data_for_ml_dump=False, print_log=True):
         # --- dataframe load
         time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
+        if print_log: print('time_start= {}'.format(time_start))
 
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
             pckl.close()
-        print('\ndata.shape: ', data.shape)
+        if print_log: print('\ndata.shape: ', data.shape)
 
         with open(self.label_pickle_path, "rb") as pckl:
             lbl = pickle.load(pckl)
@@ -363,14 +364,14 @@ class EnsembleClass:
             lbl.drop(columns=[label_buy, label_sell], inplace=True)
             #---
             pckl.close()
-        print('lbl.shape: ', lbl.shape)
+        if print_log: print('lbl.shape: ', lbl.shape)
 
         data_lbl = pd.concat((data, lbl), axis=1)
         print('data_lbl.shape: ', data_lbl.shape)
 
         self.last_clmn = data.shape[1]
-        print('self.last_clmn= ', self.last_clmn)
-        print('last 5 columns: ', data_lbl.columns[self.last_clmn - 5: self.last_clmn])
+        if print_log: print('self.last_clmn= ', self.last_clmn)
+        if print_log: print('last 5 columns: ', data_lbl.columns[self.last_clmn - 5: self.last_clmn])
         # ---
         del data
         del lbl
@@ -401,8 +402,9 @@ class EnsembleClass:
         del df_train
 
 
-    def ensemble_fit(self, n_classifiers, df_train, max_depth=3, n_estimators=100, n_jobs=-1,
-                     use_ens_ftrs_arr_dump=False, save_ens_clf_arr=True, print_log=True):
+    def ensemble_fit(self, n_classifiers, max_depth=3, n_estimators=100, n_jobs=-1,
+                     use_ens_ftrs_arr_dump=False, save_ens_clf_arr=True,
+                     use_data_for_ml_dump=False, save_data_for_ml_dump=False, print_log=True):
         """
         Create ensemble of fitted classifiers.
 
@@ -410,7 +412,8 @@ class EnsembleClass:
             None
         """
         #--- data preparation
-        self.data_preparation()
+        self.data_preparation(use_data_for_ml_dump=use_data_for_ml_dump, save_data_for_ml_dump=save_data_for_ml_dump,
+                              print_log=print_log)
         #--- features loading
         if use_ens_ftrs_arr_dump:
             with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
@@ -427,8 +430,9 @@ class EnsembleClass:
 
         for i in range(n_classifiers):
             features_for_ml = self.ens_ftrs_arr[i]
-            X_train_iter = df_train.loc[:, features_for_ml]
-            y_train_iter = df_train.loc[:, self.target_clmn]
+            if print_log: print('i= {0}, features= {1}'.format(i, features_for_ml))
+            X_train_iter = self.df_train.loc[:, features_for_ml]
+            y_train_iter = self.df_train.loc[:, self.target_clmn]
 
             basic_clf.fit(X_train_iter, y_train_iter)
             clf_copy = copy.deepcopy(basic_clf)
@@ -441,7 +445,7 @@ class EnsembleClass:
         #---
 
 
-    def ensemble_predict(self, n_classifiers, df_test, use_ens_clf_arr_dump=False, save_pred_df=True,
+    def ensemble_predict(self, n_classifiers, use_ens_clf_arr_dump=False, save_pred_df=True,
                          save_pred_statistics=True, print_log=True):
         if self.ens_ftrs_arr is None:
             with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
@@ -454,8 +458,10 @@ class EnsembleClass:
                 self.ens_clf = pickle.load(pckl)
                 pckl.close()
             if print_log: print('\nens_clf has been loaded.')
+        if self.df_test is None:
+            self.data_preparation(use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=print_log)
 
-        df_pred = pd.DataFrame(index=df_test.index)
+        df_pred = pd.DataFrame(index=self.df_test.index)
         acc_arr = []
         f1_arr = []
         conf_matrix_arr = []
@@ -464,8 +470,8 @@ class EnsembleClass:
         sr_arr = []
         for i in range(n_classifiers):
             features_for_ml = self.ens_ftrs_arr[i]
-            X_test_iter = df_test.loc[:, features_for_ml]
-            y_test_iter = df_test.loc[:, self.target_clmn]
+            X_test_iter = self.df_test.loc[:, features_for_ml]
+            y_test_iter = self.df_test.loc[:, self.target_clmn]
 
             clf = self.ens_clf[i]
 
@@ -525,7 +531,12 @@ if __name__ == '__main__':
     #                                                                                             basic_accuracy, ens_acc))
     # #---
     req = EnsembleClass()
-    feat_arr = req.feat_distr(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
+    # feat_arr = req.feat_distr(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
+    #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
+    #                           minor_features_arr=req.minor_features_arr, print_log=False, save_dump=True)
+    # print("\nfeat_arr:\n", feat_arr)
+    req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
                               major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
-                              minor_features_arr=req.minor_features_arr, print_log=False, save_dump=True)
-    print("\nfeat_arr:\n", feat_arr)
+                              minor_features_arr=req.minor_features_arr, save_dump=True,
+                              dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
+    # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, )
