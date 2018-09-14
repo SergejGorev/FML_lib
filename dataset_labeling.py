@@ -10,15 +10,15 @@ import sys
 
 class LabelingClass:
     #---
-    num_threads = 8
-    trgt = 0.0075 # target price relative change
+    num_threads = 16
+    trgt = 0.0025 # target price relative change
     tpSL = [1., 0.5]
-    trgt_arr = [0.0025, 0.0050, 0.0075, 0.0100, 0.0125]
+    trgt_arr = [0.0015 , 0.002, 0.0025, 0.003, 0.004, 0.0045]
     tpSL_arr = [[1., 0.5], [1., 1.], [1., 1.5], [1., 2.]]
     pos_duration_max = 3 # (days)
-    data_pickle_path = r'/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1.pickle'  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1.pickle"
+    data_pickle_path = r'/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle'  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1.pickle"
     labels_pickle_path = r'/home/rom/01-Algorithmic_trading/02_1-EURUSD/'   # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\\"
-    labels_file_name = "eurusd_5_v1.1_lbl"
+    labels_file_name = "eurusd_5_v1_lbl"
     lbl_bsc_names = ['label_buy', 'label_sell', 'target_label']
     #---
     __postfix = ''
