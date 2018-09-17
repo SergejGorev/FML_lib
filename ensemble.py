@@ -428,6 +428,8 @@ class EnsembleClass:
         #--- classifiers training cycle
         basic_clf = XGBClassifier(max_depth=max_depth, n_estimators=n_estimators, n_jobs=n_jobs)
 
+        #---
+        if print_log: print()
         for i in range(n_classifiers):
             features_for_ml = self.ens_ftrs_arr[i]
             if print_log: print('i= {0}, features= {1}'.format(i, features_for_ml))
@@ -535,8 +537,14 @@ if __name__ == '__main__':
     #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
     #                           minor_features_arr=req.minor_features_arr, print_log=False, save_dump=True)
     # print("\nfeat_arr:\n", feat_arr)
-    req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
-                              major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
-                              minor_features_arr=req.minor_features_arr, save_dump=True,
-                              dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
-    # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, )
+
+    # req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
+    #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
+    #                           minor_features_arr=req.minor_features_arr, save_dump=True,
+    #                           dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
+
+    # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
+    #                  use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)
+
+    req.ensemble_predict(n_classifiers=req.n_classifiers, use_ens_clf_arr_dump=True, save_pred_df=True,
+                         save_pred_statistics=True, print_log=True)
