@@ -218,25 +218,28 @@ class EnsembleClass:
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
 
-    data_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
-    label_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
-    target_clmn = 'target_label_0i0025_1i0_1i0'
+    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #   r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    data_pickle_file_name = "eurusd_5_v1.4.pickle"
+    label_pickle_file_name = "eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+
     postfix = '_0i0025_1i0_1i0'
+    version = 'v1.0'
+    target_clmn_prefix = 'target_label'
     profit_value = 23
     loss_value = -25 #-25
     dump_ensemble_pickle = True # dump ensemble pickle
-    ensemble_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
-    data_for_ml_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
-    ens_ftrs_arr_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
-    ens_clf_arr_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
-    ens_pred_df_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
-    ens_pred_statcs_pickle_path = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+    ensemble_pickle_prefix = "ensemble_eurusd_5"
+    data_for_ml_pickle_prefix = "data_for_ml_test"
+    ens_ftrs_arr_pickle_prefix = "ens_ftrs_arr"
+    ens_clf_arr_pickle_prefix = "ens_clf_arr"
+    ens_pred_df_pickle_prefix = "ens_pred_df"
+    ens_pred_statcs_pickle_prefix = "ens_pred_statcs"
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
     test_start = dt.datetime(2017, 7, 1, 0, 0)
 
-
+    #---
     data_for_ml = None
     df_train = None
     df_test = None
@@ -244,6 +247,39 @@ class EnsembleClass:
     clf_arr = []
     ens_ftrs_arr = None
     ens_clf = None  # ensemble classifier
+    #---
+    pickle_postfix = ""
+    data_pickle_path = ""
+    label_pickle_path = ""
+    target_clmn = ""
+    ensemble_pickle_path = ""
+    data_for_ml_pickle_path = ""
+    ens_ftrs_arr_pickle_path = ""
+    ens_clf_arr_pickle_path = ""
+    ens_pred_df_pickle_path = ""
+    ens_pred_statcs_pickle_path = ""
+
+    def __init__(self):
+        self.pickle_postfix = self.postfix + '_' + self.version + '.pickle'
+        self.data_pickle_path = self.folder_name + '\\' + self.data_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+        self.label_pickle_path = self.folder_name + '\\' + self.label_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+
+        self.target_clmn = 'target_label_0i0025_1i0_1i0'
+        self.ensemble_pickle_path = self.folder_name + '\\' + self.ensemble_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
+        self.data_for_ml_pickle_path = self.folder_name + '\\' + self.data_for_ml_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
+        self.ens_ftrs_arr_pickle_path = self.folder_name + '\\' + self.ens_ftrs_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
+        self.ens_clf_arr_pickle_path = self.folder_name + '\\' + self.ens_clf_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
+        self.ens_pred_df_pickle_path = self.folder_name + '\\' + self.ens_pred_df_pickle_prefix+ self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
+        self.ens_pred_statcs_pickle_path = self.folder_name + '\\' + self.ens_pred_statcs_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+        # print('data_pickle_path= '+self.data_pickle_path)
+        # print('label_pickle_path= ' + self.label_pickle_path)
+        # print('target_clmn= ' + self.target_clmn)
+        # print('ensemble_pickle_path= ' + self.ensemble_pickle_path)
+        # print('data_for_ml_pickle_path= ' + self.data_for_ml_pickle_path)
+        # print('ens_ftrs_arr_pickle_path= ' + self.ens_ftrs_arr_pickle_path)
+        # print('ens_clf_arr_pickle_path= ' + self.ens_clf_arr_pickle_path)
+        # print('ens_pred_df_pickle_path= ' + self.ens_pred_df_pickle_path)
+        # print('ens_pred_statcs_pickle_path= ' + self.ens_pred_statcs_pickle_path)
 
     @staticmethod
     def ensemble_accuracy(n_classifiers, accuracy):
@@ -420,7 +456,7 @@ class EnsembleClass:
                 self.ens_ftrs_arr = pickle.load(pckl)
                 pckl.close()
         else:
-            self.ens_ftrs_arr = self.feat_distr(n_classifiers=self.n_classifiers, n_features_in_clf=self.n_features_in_clf,
+            self.ens_ftrs_arr = self.features_distribution(n_classifiers=self.n_classifiers, n_features_in_clf=self.n_features_in_clf,
                             major_features_part=self.major_features_part, major_features_arr=self.major_features_arr,
                             minor_features_arr=self.minor_features_arr, print_log=False, save_dump=True,
                             dump_file_path=self.ens_ftrs_arr_pickle_path)
