@@ -13,7 +13,7 @@ class LabelingClass:
     num_threads = 16
     trgt = 0.0025 # target price relative change
     tpSL = [1., 0.5]
-    trgt_arr = [0.0015 , 0.002, 0.0025, 0.003, 0.004, 0.0045]
+    trgt_arr = [0.0035]  # [0.0015 , 0.002, 0.0025, 0.003, 0.004, 0.0045]
     tpSL_arr = [[1., 0.5], [1., 1.], [1., 1.5], [1., 2.]]
     pos_duration_max = 3 # (days)
     data_pickle_path = r'/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle'  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1.pickle"
