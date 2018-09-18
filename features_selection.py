@@ -5,6 +5,7 @@ import datetime as dt
 import pickle
 from xgboost import XGBClassifier
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from scipy import stats
 import copy
 import warnings
 
@@ -277,6 +278,103 @@ class FeaturesSelectionClass:
             print('\n----------------------------------------------------------------------------------------------------\n')
 
 
+    @staticmethod
+    def features_arr_analyze(fetures_arr_path='feat_imp.pickle', first_feature_number=14,
+                             best_features_save=False, major_features_count=72, minor_features_count=128,
+                             major_features_path='major_ftrs_arr.pickle', minor_features_path='minor_ftrs_arr.pickle',
+                             print_log=True):
+        with open(fetures_arr_path, "rb") as pckl:
+            feat_imp_df = pickle.load(pckl)
+            pckl.close()
+
+        feat_imp_df = feat_imp_df[:feat_imp_df['acc_score_mean'].dropna().count()]
+        # replace 0. to np.nan. It's important for mean calculation.
+        feat_imp_df.replace(to_replace=0., value=np.nan, inplace=True)
+        feat_imp_df_shape = feat_imp_df.shape
+        if print_log: print('feat_imp_df.shape= ', feat_imp_df_shape)
+        #--- short statistics
+        if print_log:
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print('Features short statistics:')
+            feat_statistics = feat_imp_df.loc[:,
+                                  ['acc_score_mean', 'f1_score_mean', 'return_mean', 'sharpe_mean']].describe()
+            print('\n', feat_statistics)
+
+            n = feat_imp_df_shape[0]
+            res_conf_int = stats.norm.interval(0.95, loc=feat_statistics.loc['mean', 'acc_score_mean'],
+                                               scale=feat_statistics.loc['std', 'acc_score_mean'] / np.sqrt(n - 1))
+
+            print('\naccuracy mean conf. intervals (for 0.95 conf.level)= [{0:.4f}, {1:.4f}]'.format(
+                                                                                    res_conf_int[0], res_conf_int[1]))
+            res_conf_int = stats.norm.interval(0.95, loc=feat_statistics.loc['mean', 'f1_score_mean'],
+                                               scale=feat_statistics.loc['std', 'f1_score_mean'] / np.sqrt(n - 1))
+
+            print('f1 score mean conf. intervals (for 0.95 conf.level)= [{0:.4f}, {1:.4f}]'.format(
+                                                                                    res_conf_int[0], res_conf_int[1]))
+            res_conf_int = stats.norm.interval(0.95, loc=feat_statistics.loc['mean', 'return_mean'],
+                                               scale=feat_statistics.loc['std', 'return_mean'] / np.sqrt(n - 1))
+
+            print('return mean conf. intervals (for 0.95 conf.level)= [{0:.4f}, {1:.4f}]'.format(
+                                                                                    res_conf_int[0], res_conf_int[1]))
+            res_conf_int = stats.norm.interval(0.95, loc=feat_statistics.loc['mean', 'sharpe_mean'],
+                                               scale=feat_statistics.loc['std', 'sharpe_mean'] / np.sqrt(n - 1))
+
+            print('sharpe ratio mean conf. intervals (for 0.95 conf.level)= [{0:.4f}, {1:.4f}]'.format(
+                                                                                    res_conf_int[0], res_conf_int[1]))
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            n_count = feat_imp_df[['acc_score_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, ['acc_score_mean']].count()[0]
+            pos_part = pos_part_count / n_count
+            print('\nacc_mean > 0.5: n_count= {0}, pos_part_count= {1}, pos_part= {2:.2%}'.format(n_count, pos_part_count,
+                                                                                                pos_part))
+            n_count = feat_imp_df[['return_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.return_mean > 0., ['return_mean']].count()[0]
+            pos_part = pos_part_count / n_count
+            print('\nreturn_mean > 0.0: n_count= {0}, pos_part_count= {1}, pos_part= {2:.2%}'.format(n_count,
+                                                                                                   pos_part_count,
+                                                                                                   pos_part))
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        #---
+        feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, :]
+        if print_log:
+            print('Features (selected part) short statistics:')
+            print('\n', feat_imp_df_part.loc[:,
+                        ['acc_score_mean', 'f1_score_mean', 'return_mean', 'sharpe_mean']].describe())
+            # print('Columns in selected part of data_frame:')
+            # for i, clmn in enumerate(feat_imp_df_part.columns):
+            #     print('{0:<3}. {1}'.format(i, clmn))
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        #---
+        res = feat_imp_df_part.loc[:, feat_imp_df_part.columns[first_feature_number:]].mean().sort_values(ascending=False)
+        if print_log:
+            print('5 first columns: ', \
+                  feat_imp_df_part.loc[:, feat_imp_df_part.columns[first_feature_number:]].columns[:5])
+            print('\nThe major features:\n')
+            for i, item in enumerate(zip(res.index[:major_features_count], res[:major_features_count]), 1):
+                print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
+            print('\nThe minor features:\n')
+            for i, item in enumerate(zip(res.index[major_features_count:(major_features_count+minor_features_count)],
+                                         res[major_features_count:(major_features_count+minor_features_count)]), 1):
+                print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
+            print('\nThe worst features:\n')
+            for i, item in enumerate(zip(res.index[-major_features_count:], res[major_features_count:]),
+                                     -major_features_count):
+                print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+
+        major_features_arr = list(res.index[0:major_features_count])
+        minor_features_arr = list(res.index[major_features_count:(major_features_count + minor_features_count)])
+        if best_features_save:
+            with open(major_features_path, "wb") as pckl:
+                pickle.dump(major_features_arr, pckl)
+                pckl.close()
+            with open(minor_features_path, "wb") as pckl:
+                pickle.dump(minor_features_arr, pckl)
+                pckl.close()
+
+        return major_features_arr, minor_features_arr
+
+
     def execute(self):
         # --- dataframe load
         time_start = dt.datetime.now()
@@ -325,4 +423,11 @@ class FeaturesSelectionClass:
 
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
-    req.execute()
+    # req.execute()
+    fetures_arr_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180912_0i0025_1i0_1i0.pickle'
+    major_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\major_ftrs_arr_0i0025_1i0_1i0.pickle'
+    minor_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\minor_ftrs_arr_0i0025_1i0_1i0.pickle'
+    req.features_arr_analyze(fetures_arr_path=fetures_arr_path, first_feature_number=14, best_features_save=True,
+                             major_features_count=72, minor_features_count=128,
+                             major_features_path=major_features_path, minor_features_path=minor_features_path,
+                             print_log=True)
