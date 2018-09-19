@@ -427,7 +427,8 @@ if __name__ == '__main__':
     fetures_arr_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180912_0i0025_1i0_1i0.pickle'
     major_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\major_ftrs_arr_0i0025_1i0_1i0.pickle'
     minor_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\minor_ftrs_arr_0i0025_1i0_1i0.pickle'
-    req.features_arr_analyze(fetures_arr_path=fetures_arr_path, first_feature_number=14, best_features_save=True,
+    res = req.features_arr_analyze(fetures_arr_path=fetures_arr_path, first_feature_number=14, best_features_save=True,
                              major_features_count=72, minor_features_count=128,
                              major_features_path=major_features_path, minor_features_path=minor_features_path,
                              print_log=True)
+    print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
