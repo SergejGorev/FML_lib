@@ -234,6 +234,9 @@ class EnsembleClass:
     ens_clf_arr_pickle_prefix = "ens_clf_arr"
     ens_pred_df_pickle_prefix = "ens_pred_df"
     ens_pred_statcs_pickle_prefix = "ens_pred_statcs"
+    ftrs_major_arr_pickle_prefix = "ftrs_major_arr"
+    ftrs_minor_arr_pickle_prefix = "ftrs_minor_arr"
+
 
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -258,6 +261,9 @@ class EnsembleClass:
     ens_clf_arr_pickle_path = ""
     ens_pred_df_pickle_path = ""
     ens_pred_statcs_pickle_path = ""
+    ftrs_major_arr_pickle_path = ""
+    ftrs_minor_arr_pickle_path = ""
+
 
     def __init__(self):
         self.pickle_postfix = self.postfix + '_' + self.version + '.pickle'
@@ -271,6 +277,8 @@ class EnsembleClass:
         self.ens_clf_arr_pickle_path = self.folder_name + '\\' + self.ens_clf_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
         self.ens_pred_df_pickle_path = self.folder_name + '\\' + self.ens_pred_df_pickle_prefix+ self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
         self.ens_pred_statcs_pickle_path = self.folder_name + '\\' + self.ens_pred_statcs_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+        self.ftrs_major_arr_pickle_path = self.folder_name + '\\' + self.ftrs_major_arr_pickle_prefix + self.pickle_postfix
+        self.ftrs_minor_arr_pickle_path = self.folder_name + '\\' + self.ftrs_minor_arr_pickle_prefix + self.pickle_postfix
         # print('data_pickle_path= '+self.data_pickle_path)
         # print('label_pickle_path= ' + self.label_pickle_path)
         # print('target_clmn= ' + self.target_clmn)
@@ -308,10 +316,22 @@ class EnsembleClass:
         return sum(probs)
 
 
+    def import_features_array(self, print_log=True):
+        with open(self.ftrs_major_arr_pickle_path, "rb") as pckl:
+            self.major_features_arr = pickle.load(pckl)
+            pckl.close()
+        if print_log: print('major_features_arr:\n {0}'.format(self.major_features_arr))
+        with open(self.ftrs_minor_arr_pickle_path, "rb") as pckl:
+            self.minor_features_arr = pickle.load(pckl)
+            pckl.close()
+        if print_log: print('minor_features_arr:\n {0}'.format(self.minor_features_arr))
+
+
     @staticmethod
-    def features_distribution(n_classifiers, n_features_in_clf, major_features_part, major_features_arr,
-                              minor_features_arr, save_dump=False,
-                              dump_file_path=r'ens_ftrs_arr.pickle', print_log=False):
+    def features_distribution(n_classifiers, n_features_in_clf, major_features_part,
+                              major_features_arr, minor_features_arr,
+                              save_dump=False, dump_file_path=r'ens_ftrs_arr.pickle',
+                              print_log=False):
         """
         Function for features distribution between the classifiers.
 
@@ -325,16 +345,17 @@ class EnsembleClass:
             Array of more predictible effective features.
         :param minor_features_arr: array.
             Array of less predictible effective features.
-        :param print_log: boolean.
-            The need to print the log.
         :param save_dump: boolean.
             The need to dump of features array.
         :param dump_file_path: string.
             Dump file path.
+        :param print_log: boolean.
+            The need to print the log.
 
         :return:
             Array of size (n_classifiers, n_features_in_clf) of features for basic classifiers.
         """
+
         feat_arr = []
         for i in range(n_classifiers):
             features_set = []
@@ -567,16 +588,24 @@ if __name__ == '__main__':
     # ens_acc = EnsembleClass.ensemble_accuracy(n_classifiers=n_classifiers, accuracy=basic_accuracy)
     # print('\nEnsemble accuracy for {0} classifiers with basic accuracy {1:.4f} = {2:.4f}'.format(n_classifiers,
     #                                                                                             basic_accuracy, ens_acc))
-    # #---
-    req = EnsembleClass()
-    # feat_arr = req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
-    #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
-    #                           minor_features_arr=req.minor_features_arr, save_dump=True,
-    #                           dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
-    # print("\nfeat_arr:\n", feat_arr)
+    #---
+    time_start = dt.datetime.now()
+    print('time_start= {}'.format(time_start))
 
-    # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
-    #                  use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)
+    req = EnsembleClass()
+    req.import_features_array()
+    feat_arr = req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
+                              major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
+                              minor_features_arr=req.minor_features_arr, save_dump=True,
+                              dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
+    print("\nfeat_arr:\n", feat_arr)
+
+    req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
+                     use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)
 
     req.ensemble_predict(n_classifiers=req.n_classifiers, use_ens_clf_arr_dump=True, save_pred_df=True,
                          save_pred_statistics=True, print_log=True)
+
+    time_finish = dt.datetime.now()
+    time_duration = time_finish - time_start
+    print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
