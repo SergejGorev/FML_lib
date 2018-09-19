@@ -15,9 +15,9 @@ class FeaturesSelectionClass:
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
     folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
-    label_pickle_file_name = "eurusd_5_v1_lbl_0i002_1i0_0i5.pickle"
+    label_pickle_file_name = "eurusd_5_v1_lbl_0i0035_1i0_1i0.pickle"
 
-    postfix = '_0i002_1i0_0i5'
+    postfix = '_0i0035_1i0_1i0'
     version = 'v1.0'
     target_clmn_prefix = 'target_label'
     profit_value = 18
@@ -312,7 +312,7 @@ class FeaturesSelectionClass:
     def features_arr_analyze(features_imp_arr_path='feat_imp.pickle', first_feature_number=14,
                              best_features_save=False, major_features_count=72, minor_features_count=128,
                              major_features_path='major_ftrs_arr.pickle', minor_features_path='minor_ftrs_arr.pickle',
-                             print_log=True):
+                             selection_by_return=False, print_log=True):
         with open(features_imp_arr_path, "rb") as pckl:
             feat_imp_df = pickle.load(pckl)
             pckl.close()
@@ -324,8 +324,10 @@ class FeaturesSelectionClass:
         if print_log: print('feat_imp_df.shape= ', feat_imp_df_shape)
         #--- short statistics
         if print_log:
-            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-            print('Features short statistics:')
+            print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print(features_imp_arr_path)
+            print('selection_by_return= ', selection_by_return)
+            print('\nFeatures short statistics:')
             feat_statistics = feat_imp_df.loc[:,
                                   ['acc_score_mean', 'f1_score_mean', 'return_mean', 'sharpe_mean']].describe()
             print('\n', feat_statistics)
@@ -351,7 +353,7 @@ class FeaturesSelectionClass:
 
             print('sharpe ratio mean conf. intervals (for 0.95 conf.level)= [{0:.4f}, {1:.4f}]'.format(
                                                                                     res_conf_int[0], res_conf_int[1]))
-            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             n_count = feat_imp_df[['acc_score_mean']].count()[0]
             pos_part_count = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, ['acc_score_mean']].count()[0]
             pos_part = pos_part_count / n_count
@@ -363,9 +365,12 @@ class FeaturesSelectionClass:
             print('\nreturn_mean > 0.0: n_count= {0}, pos_part_count= {1}, pos_part= {2:.2%}'.format(n_count,
                                                                                                    pos_part_count,
                                                                                                    pos_part))
-            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         #---
-        feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, :]
+        if selection_by_return:
+            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.return_mean > 0., :]
+        else:
+            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, :]
         if print_log:
             print('Features (selected part) short statistics:')
             print('\n', feat_imp_df_part.loc[:,
@@ -373,7 +378,7 @@ class FeaturesSelectionClass:
             # print('Columns in selected part of data_frame:')
             # for i, clmn in enumerate(feat_imp_df_part.columns):
             #     print('{0:<3}. {1}'.format(i, clmn))
-            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         #---
         res = feat_imp_df_part.loc[:, feat_imp_df_part.columns[first_feature_number:]].mean().sort_values(ascending=False)
         if print_log:
@@ -390,7 +395,7 @@ class FeaturesSelectionClass:
             for i, item in enumerate(zip(res.index[-major_features_count:], res[major_features_count:]),
                                      -major_features_count):
                 print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
-            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
         major_features_arr = list(res.index[0:major_features_count])
         minor_features_arr = list(res.index[major_features_count:(major_features_count + minor_features_count)])
@@ -453,11 +458,12 @@ class FeaturesSelectionClass:
 
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
-    req.execute()
+    # req.execute()
 
-    # res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
-    #                                best_features_save=True, major_features_count=72, minor_features_count=128,
-    #                                major_features_path=req.ftrs_major_arr_pickle_path,
-    #                                minor_features_path=req.ftrs_minor_arr_pickle_path,
-    #                                print_log=True)
-    # print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
+    res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
+                                   best_features_save=True, major_features_count=72, minor_features_count=128,
+                                   major_features_path=req.ftrs_major_arr_pickle_path,
+                                   minor_features_path=req.ftrs_minor_arr_pickle_path,
+                                   selection_by_return=True,
+                                   print_log=True)
+    print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
