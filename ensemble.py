@@ -264,7 +264,7 @@ class EnsembleClass:
         self.data_pickle_path = self.folder_name + '\\' + self.data_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
         self.label_pickle_path = self.folder_name + '\\' + self.label_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
 
-        self.target_clmn = 'target_label_0i0025_1i0_1i0'
+        self.target_clmn =  self.target_clmn_prefix + self.postfix  # 'target_label_0i0025_1i0_1i0'
         self.ensemble_pickle_path = self.folder_name + '\\' + self.ensemble_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
         self.data_for_ml_pickle_path = self.folder_name + '\\' + self.data_for_ml_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
         self.ens_ftrs_arr_pickle_path = self.folder_name + '\\' + self.ens_ftrs_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
@@ -311,7 +311,7 @@ class EnsembleClass:
     @staticmethod
     def features_distribution(n_classifiers, n_features_in_clf, major_features_part, major_features_arr,
                               minor_features_arr, save_dump=False,
-                              dump_file_path=r'ensemble_features_array.pickle', print_log=False):
+                              dump_file_path=r'ens_ftrs_arr.pickle', print_log=False):
         """
         Function for features distribution between the classifiers.
 
@@ -569,15 +569,11 @@ if __name__ == '__main__':
     #                                                                                             basic_accuracy, ens_acc))
     # #---
     req = EnsembleClass()
-    # feat_arr = req.feat_distr(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
-    #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
-    #                           minor_features_arr=req.minor_features_arr, print_log=False, save_dump=True)
-    # print("\nfeat_arr:\n", feat_arr)
-
-    # req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
+    # feat_arr = req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
     #                           major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
     #                           minor_features_arr=req.minor_features_arr, save_dump=True,
     #                           dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
+    # print("\nfeat_arr:\n", feat_arr)
 
     # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
     #                  use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)

@@ -12,14 +12,19 @@ import warnings
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
-    label_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
-    target_clmn = 'target_label_0i0025_1i0_1i0'
+    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #   r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    data_pickle_file_name = "eurusd_5_v1.4.pickle"
+    label_pickle_file_name = "eurusd_5_v1_lbl_0i0025_1i0_1i0.pickle"
+
     postfix = '_0i0025_1i0_1i0'
+    version = 'v1.0'
+    target_clmn_prefix = 'target_label'
     profit_value = 23
     loss_value = -25 #-25
     dump_pickle = True # dump data pickle
-    f_i_path_for_dump = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/feat_imp_20180912_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
+    f_i_pickle_prefix = "feat_imp"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
+    ftrs_major_arr_pickle_prefix = "ftrs_major_arr"
+    ftrs_minor_arr_pickle_prefix = "ftrs_minor_arr"
 
     price_step = 0.001
     # train_start = dt.datetime(2005, 1, 1, 0, 0)
@@ -29,12 +34,36 @@ class FeaturesSelectionClass:
     dt1 = [dt.datetime(2010, 6, 15), dt.datetime(2012, 6, 15), dt.datetime(2014, 6, 15), dt.datetime(2016, 6, 15),
            dt.datetime(2018, 6, 15)]
 
+    data_pickle_path = ""
+    label_pickle_path = ""
+    f_i_pickle_path = ""
+    ftrs_major_arr_pickle_path = ""
+    ftrs_minor_arr_pickle_path = ""
+    target_clmn = ""
     testTimes = None
     data_for_ml = None
     features_arr = []
     n_features = 0
     last_clmn = 0
     # ---
+
+
+    def __init__(self):
+        self.pickle_postfix = self.postfix + '_' + self.version + '.pickle'
+        self.data_pickle_path = self.folder_name + '\\' + self.data_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+        self.label_pickle_path = self.folder_name + '\\' + self.label_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+
+        self.target_clmn =  self.target_clmn_prefix + self.postfix  # 'target_label_0i0025_1i0_1i0'
+        self.f_i_pickle_path = self.folder_name + '\\' + self.f_i_pickle_prefix + self.pickle_postfix
+        self.ftrs_major_arr_pickle_path = self.folder_name + '\\' + self.ftrs_major_arr_pickle_prefix + self.pickle_postfix
+        self.ftrs_minor_arr_pickle_path = self.folder_name + '\\' + self.ftrs_minor_arr_pickle_prefix + self.pickle_postfix
+        # print('data_pickle_path= '+self.data_pickle_path)
+        # print('label_pickle_path= ' + self.label_pickle_path)
+        # print('target_clmn= ' + self.target_clmn)
+        # print('f_i_pickle_path= ' + self.f_i_pickle_path)
+        # print('ftrs_major_arr_pickle_path= ' + self.ftrs_major_arr_pickle_path)
+        # print('ftrs_minor_arr_pickle_path= ' + self.ftrs_minor_arr_pickle_path)
+
 
     @staticmethod
     def select_data_for_ml(data_lbl, price_step, target_clmn):
@@ -268,7 +297,7 @@ class FeaturesSelectionClass:
                 df_st.loc[df_st.index == step, item[0]] = item[1]
             #---
             # сохранение дампа
-            pckl = open(self.f_i_path_for_dump, "wb")
+            pckl = open(self.f_i_pickle_path, "wb")
             pickle.dump(df_st, pckl)
             pckl.close()
             time_cur = dt.datetime.now()
@@ -279,11 +308,11 @@ class FeaturesSelectionClass:
 
 
     @staticmethod
-    def features_arr_analyze(fetures_arr_path='feat_imp.pickle', first_feature_number=14,
+    def features_arr_analyze(features_imp_arr_path='feat_imp.pickle', first_feature_number=14,
                              best_features_save=False, major_features_count=72, minor_features_count=128,
                              major_features_path='major_ftrs_arr.pickle', minor_features_path='minor_ftrs_arr.pickle',
                              print_log=True):
-        with open(fetures_arr_path, "rb") as pckl:
+        with open(features_imp_arr_path, "rb") as pckl:
             feat_imp_df = pickle.load(pckl)
             pckl.close()
 
@@ -424,11 +453,12 @@ class FeaturesSelectionClass:
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
     # req.execute()
-    fetures_arr_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180912_0i0025_1i0_1i0.pickle'
-    major_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\major_ftrs_arr_0i0025_1i0_1i0.pickle'
-    minor_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\minor_ftrs_arr_0i0025_1i0_1i0.pickle'
-    res = req.features_arr_analyze(fetures_arr_path=fetures_arr_path, first_feature_number=14, best_features_save=True,
-                             major_features_count=72, minor_features_count=128,
-                             major_features_path=major_features_path, minor_features_path=minor_features_path,
-                             print_log=True)
+    # features_imp_arr_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180912_0i0025_1i0_1i0.pickle'
+    # major_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ftrs_major_arr_0i0025_1i0_1i0.pickle'
+    # minor_features_path = r'd:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ftrs_minor_arr_0i0025_1i0_1i0.pickle'
+    res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
+                                   best_features_save=True, major_features_count=72, minor_features_count=128,
+                                   major_features_path=req.ftrs_major_arr_pickle_path,
+                                   minor_features_path=req.ftrs_minor_arr_pickle_path,
+                                   print_log=True)
     print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
