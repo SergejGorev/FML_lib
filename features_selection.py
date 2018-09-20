@@ -27,6 +27,13 @@ class FeaturesSelectionClass:
     ftrs_major_arr_pickle_prefix = "ftrs_major_arr"
     ftrs_minor_arr_pickle_prefix = "ftrs_minor_arr"
 
+    feat_imp_filenames_arr = ['feat_imp_0i002_1i0_1i0_v1.0.pickle', 'feat_imp_0i002_1i0_2i0_v1.0.pickle',
+                              'feat_imp_0i003_1i0_1i0_v1.0.pickle', 'feat_imp_0i0015_1i0_1i0_v1.0.pickle',
+                              'feat_imp_0i0025_1i0_1i0_v1.0.pickle']  # , 'feat_imp_0i0035_1i0_1i0_v1.0.pickle'
+    clmn_names_arr = ['0i002_1i0_1i0_v1.0', '0i002_1i0_2i0_v1.0',
+                      '0i003_1i0_1i0_v1.0', '0i0015_1i0_1i0_v1.0',
+                      '0i0025_1i0_1i0_v1.0']  # , '0i0035_1i0_1i0_v1.0'
+
     price_step = 0.001
     # train_start = dt.datetime(2005, 1, 1, 0, 0)
     # test_start = dt.datetime(2017, 7, 1, 0, 0)
@@ -344,9 +351,8 @@ class FeaturesSelectionClass:
                 df_st.loc[df_st.index == step, item[0]] = item[1]
             #---
             # сохранение дампа
-            pckl = open(self.f_i_pickle_path, "wb")
-            pickle.dump(df_st, pckl)
-            pckl.close()
+            with open(self.f_i_pickle_path, "wb") as pckl:
+                pickle.dump(df_st, pckl)
             time_cur = dt.datetime.now()
             time_est = time_cur - time_start
             time_eta = (time_est/(step+1))*(self.n_loops-(step+1)) if (self.n_loops-(step+1)) != 0. else 0.
@@ -358,7 +364,8 @@ class FeaturesSelectionClass:
     def features_arr_analyze(features_imp_arr_path='feat_imp.pickle', first_feature_number=14,
                              best_features_save=False, major_features_count=72, minor_features_count=128,
                              major_features_path='major_ftrs_arr.pickle', minor_features_path='minor_ftrs_arr.pickle',
-                             selection_by_return=False, print_log=True):
+                             selection_by_return=False, acc_basic_level=0.5, rtrn_basic_level=0.,
+                             print_log=True):
         """
         The function analyzes data from features importance dataframe
         and generates aggregated statistics and ranking of features.
@@ -370,12 +377,14 @@ class FeaturesSelectionClass:
         :param major_features_path: string.
         :param minor_features_path: string.
         :param selection_by_return: boolean.
-        :param print_log: boolean.
+        :param selection_by_return: boolean.
+        :param acc_basic_level: float.
+        :param rtrn_basic_level: float.
+        :param prnt_log: boolean.
         :return: tuple of arrays with major and minor features.
         """
         with open(features_imp_arr_path, "rb") as pckl:
             feat_imp_df = pickle.load(pckl)
-            pckl.close()
 
         feat_imp_df = feat_imp_df[:feat_imp_df['acc_score_mean'].dropna().count()]
         # replace 0. to np.nan. It's important for mean calculation.
@@ -415,22 +424,21 @@ class FeaturesSelectionClass:
                                                                                     res_conf_int[0], res_conf_int[1]))
             print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             n_count = feat_imp_df[['acc_score_mean']].count()[0]
-            pos_part_count = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, ['acc_score_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.acc_score_mean > acc_basic_level, ['acc_score_mean']].count()[0]
             pos_part = pos_part_count / n_count
-            print('\nacc_mean > 0.5: n_count= {0}, pos_part_count= {1}, pos_part= {2:.2%}'.format(n_count, pos_part_count,
-                                                                                                pos_part))
+            print('\nacc_mean > {0:.2f}: n_count= {1}, pos_part_count= {2}, pos_part= {3:.2%}'.format(acc_basic_level,
+                                                                                    n_count, pos_part_count, pos_part))
             n_count = feat_imp_df[['return_mean']].count()[0]
-            pos_part_count = feat_imp_df.loc[feat_imp_df.return_mean > 0., ['return_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.return_mean > rtrn_basic_level, ['return_mean']].count()[0]
             pos_part = pos_part_count / n_count
-            print('\nreturn_mean > 0.0: n_count= {0}, pos_part_count= {1}, pos_part= {2:.2%}'.format(n_count,
-                                                                                                   pos_part_count,
-                                                                                                   pos_part))
+            print('\nreturn_mean > {0:.2f}: n_count= {1}, pos_part_count= {2}, pos_part= {3:.2%}'.format(rtrn_basic_level,
+                                                                             n_count, pos_part_count, pos_part))
             print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         #---
         if selection_by_return:
-            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.return_mean > 0., :]
+            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.return_mean > rtrn_basic_level, :]
         else:
-            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > 0.5, :]
+            feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > acc_basic_level, :]
         if print_log:
             print('Features (selected part) short statistics:')
             print('\n', feat_imp_df_part.loc[:,
@@ -462,12 +470,99 @@ class FeaturesSelectionClass:
         if best_features_save:
             with open(major_features_path, "wb") as pckl:
                 pickle.dump(major_features_arr, pckl)
-                pckl.close()
             with open(minor_features_path, "wb") as pckl:
                 pickle.dump(minor_features_arr, pckl)
-                pckl.close()
 
         return major_features_arr, minor_features_arr
+
+    @staticmethod
+    def features_importance_generalization(feat_imp_filenames_arr, clmn_names_arr, first_feature_number=14,
+                                           selection_by_return=True,
+                                           acc_basic_level=0.5, rtrn_basic_level=0.,
+                                           save_res_df=True, res_df_pickle_path='gen_ftrs_imp.pickle',
+                                           print_log=True):
+        """
+        The function generalizes features importance from array of files with serialized dataframes
+        with features relative importances.
+        :param feat_imp_filenames_arr: string array.
+            The files pathes from serialized dataframes with features relative importances.
+        :param clmn_names_arr: string array.
+        :param first_feature_number: integer.
+        :param selection_by_return: boolean.
+        :param acc_basic_level: float.
+        :param rtrn_basic_level: float.
+        :param save_res_df: boolean.
+        :param res_df_pickle_path: string.
+        :param print_log: boolean.
+        :return: pandas series with generalized features importances.
+        """
+        gen_imp_df = pd.DataFrame(columns=clmn_names_arr)
+        if print_log: print('gen_imp_df:\n', gen_imp_df)
+
+        for step, file_name in enumerate(feat_imp_filenames_arr):
+            if print_log:
+                print('step= {0}\nfile_name= {1}'.format(step, file_name))
+                print('selection_by_return= ', selection_by_return)
+            with open(file_name, 'rb') as pckl:
+                feat_imp_df = pickle.load(pckl)
+            feat_imp_df = feat_imp_df[:feat_imp_df['acc_score_mean'].dropna().count()]
+            # replace 0. to np.nan. It's important for mean calculation.
+            feat_imp_df.replace(to_replace=0., value=np.nan, inplace=True)
+            feat_imp_df_shape = feat_imp_df.shape
+            if print_log: print('\nfeat_imp_df.shape= ', feat_imp_df_shape)
+            #---
+            print('--------------------------------------------------------------------------------------')
+            n_count = feat_imp_df[['acc_score_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.acc_score_mean > acc_basic_level, ['acc_score_mean']].count()[0]
+            pos_part_acc = pos_part_count / n_count
+            print('acc_mean > {0:.2f}: n_count= {1}, pos_part_count= {2}, pos_part= {3:.2%}'.format(acc_basic_level,
+                                                                                n_count, pos_part_count, pos_part_acc))
+            n_count = feat_imp_df[['return_mean']].count()[0]
+            pos_part_count = feat_imp_df.loc[feat_imp_df.return_mean > rtrn_basic_level, ['return_mean']].count()[0]
+            pos_part_rtrn = pos_part_count / n_count
+            print('\nreturn_mean > {0:.2f}: n_count= {1}, pos_part_count= {2}, pos_part= {3:.2%}'.format(rtrn_basic_level,
+                                                                             n_count, pos_part_count, pos_part_rtrn))
+            print('--------------------------------------------------------------------------------------')
+            #---
+            if selection_by_return:
+                feat_imp_df_part = feat_imp_df.loc[feat_imp_df.return_mean > rtrn_basic_level, :]
+                weight = pos_part_rtrn
+            else:
+                feat_imp_df_part = feat_imp_df.loc[feat_imp_df.acc_score_mean > acc_basic_level, :]
+                weight = pos_part_acc
+            if print_log:
+                print('\nFeatures (selected part) short statistics:')
+                print('\n', feat_imp_df_part.loc[:,
+                            ['acc_score_mean', 'f1_score_mean', 'return_mean', 'sharpe_mean']].describe())
+                # print('Columns in selected part of data_frame:')
+                # for i, clmn in enumerate(feat_imp_df_part.columns):
+                #     print('{0:<3}. {1}'.format(i, clmn))
+                print('--------------------------------------------------------------------------------------')
+            # ---
+            res = feat_imp_df_part.loc[:, feat_imp_df_part.columns[first_feature_number:]].mean().sort_values(
+                ascending=False)
+            # print('res:\n', res)
+            res = res*weight
+            # print('\nres (after weight multiplication):\n', res)
+            if print_log:
+                # print('5 first columns: ', \
+                #       feat_imp_df_part.loc[:, feat_imp_df_part.columns[first_feature_number:]].columns[:5])
+                # print('res:\n',res)
+                print('\nThe features ranking (after weight multiplication):\n')
+                for i, item in enumerate(zip(res.index, res), 1):
+                    print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
+            print('******************************************************************************************\n')
+
+            gen_imp_df[clmn_names_arr[step]] = res
+
+        gen_imp_df['total'] = gen_imp_df.sum(axis=1)
+        gen_imp_df.sort_values(by='total', ascending=False, inplace=True)
+        if print_log: print('gen_imp_df:\n', gen_imp_df)
+        if save_res_df:
+            with open(res_df_pickle_path, 'wb') as pckl:
+                pickle.dump(gen_imp_df, pckl)
+
+        return gen_imp_df
 
 
     def execute(self):
@@ -479,14 +574,12 @@ class FeaturesSelectionClass:
         time_start = dt.datetime.now()
         print('time_start= {}'.format(time_start))
 
-        pckl = open(self.data_pickle_path, "rb")
-        data = pickle.load(pckl)
-        pckl.close()
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
         print('\ndata.shape: ', data.shape)
 
-        pckl = open(self.label_pickle_path, "rb")
-        lbl = pickle.load(pckl)
-        pckl.close()
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
         print('lbl.shape: ', lbl.shape)
 
         data_lbl = pd.concat((data, lbl), axis=1)
@@ -505,9 +598,8 @@ class FeaturesSelectionClass:
 
         # # ---
         # # загрузка датафрейма в тестовых целях
-        # pckl = open(r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_1.0.pickle", "rb")
-        # data_for_ml = pickle.load(pckl)
-        # pckl.close()
+        # with open(r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_1.0.pickle", "rb") as pckl:
+        #     data_for_ml = pickle.load(pckl)
         # self.data_for_ml = data_for_ml
         # # ---
 
@@ -524,10 +616,19 @@ if __name__ == '__main__':
     req = FeaturesSelectionClass()
     # req.execute()
 
-    res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
-                                   best_features_save=True, major_features_count=72, minor_features_count=128,
-                                   major_features_path=req.ftrs_major_arr_pickle_path,
-                                   minor_features_path=req.ftrs_minor_arr_pickle_path,
-                                   selection_by_return=True,
-                                   print_log=True)
-    print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
+    # res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
+    #                                best_features_save=True, major_features_count=72, minor_features_count=128,
+    #                                major_features_path=req.ftrs_major_arr_pickle_path,
+    #                                minor_features_path=req.ftrs_minor_arr_pickle_path,
+    #                                selection_by_return=True,
+    #                                print_log=True)
+    # print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
+    feat_imp_filenames_arr = [req.folder_name+os.sep+file_name for file_name in req.feat_imp_filenames_arr]
+    res_df_pickle_path = req.folder_name+os.sep+'gen_imp_df_v.1.0.pickle'
+    res = req.features_importance_generalization(feat_imp_filenames_arr=feat_imp_filenames_arr,
+                                                 clmn_names_arr=req.clmn_names_arr,
+                                                 first_feature_number=14,
+                                                 selection_by_return=True,
+                                                 acc_basic_level=0.5, rtrn_basic_level=0.,
+                                                 save_res_df=True, res_df_pickle_path=res_df_pickle_path,
+                                                 print_log=True)

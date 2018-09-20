@@ -302,9 +302,8 @@ class FeaturesCalcClass:
             df[clmn_name] = clmn_data
 
         if dump_pickle:
-            pckl = open(self.data_pickle_path_for_dump, "wb")
-            pickle.dump(df, pckl)
-            pckl.close()
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(df, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
@@ -396,9 +395,8 @@ class FeaturesCalcClass:
             df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         if dump_pickle:
-            pckl = open(self.data_pickle_path_for_dump, "wb")
-            pickle.dump(df, pckl)
-            pckl.close()
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(df, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
@@ -458,9 +456,8 @@ class FeaturesCalcClass:
             df = processing.clmn_compare(df=df, clmn_1=clmn_1, clmn_2=clmn_2, new_clmn_name=new_clmn_name)
 
         if dump_pickle:
-            pckl = open(self.data_pickle_path_for_dump, "wb")
-            pickle.dump(df, pckl)
-            pckl.close()
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(df, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
@@ -703,9 +700,8 @@ class FeaturesCalcClass:
         time_start = dt.datetime.now()
         print('time_start= {}'.format(time_start))
 
-        pckl = open(self.data_pickle_path, "rb")
-        data = pickle.load(pckl)
-        pckl.close()
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
         #---
 
         #---
@@ -729,9 +725,8 @@ class FeaturesCalcClass:
         #---
 
         if self.dump_pickle:
-            pckl = open(self.data_pickle_path_for_dump, "wb")
-            pickle.dump(data, pckl)
-            pckl.close()
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(data, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start

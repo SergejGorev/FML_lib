@@ -319,11 +319,9 @@ class EnsembleClass:
     def import_features_array(self, print_log=True):
         with open(self.ftrs_major_arr_pickle_path, "rb") as pckl:
             self.major_features_arr = pickle.load(pckl)
-            pckl.close()
         if print_log: print('major_features_arr:\n {0}'.format(self.major_features_arr))
         with open(self.ftrs_minor_arr_pickle_path, "rb") as pckl:
             self.minor_features_arr = pickle.load(pckl)
-            pckl.close()
         if print_log: print('minor_features_arr:\n {0}'.format(self.minor_features_arr))
 
 
@@ -396,7 +394,6 @@ class EnsembleClass:
         if save_dump:
             with open(dump_file_path, "wb") as pckl:
                 pickle.dump(feat_arr, pckl)
-                pckl.close()
             print('\nFeatures array dump (\'{0}\') is saved.'.format(dump_file_path))
         #---
         return feat_arr
@@ -409,7 +406,6 @@ class EnsembleClass:
 
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
-            pckl.close()
         if print_log: print('\ndata.shape: ', data.shape)
 
         with open(self.label_pickle_path, "rb") as pckl:
@@ -419,8 +415,6 @@ class EnsembleClass:
             lbl['label_buy'] = lbl[label_buy]
             lbl['label_sell'] = lbl[label_sell]
             lbl.drop(columns=[label_buy, label_sell], inplace=True)
-            #---
-            pckl.close()
         if print_log: print('lbl.shape: ', lbl.shape)
 
         data_lbl = pd.concat((data, lbl), axis=1)
@@ -438,7 +432,6 @@ class EnsembleClass:
             # загрузка датафрейма в тестовых целях
             with open(self.data_for_ml_pickle_path, "rb") as pckl:
                 data_for_ml = pickle.load(pckl)
-                pckl.close()
             self.data_for_ml = data_for_ml
             # ---
         else:
@@ -448,7 +441,6 @@ class EnsembleClass:
         if save_data_for_ml_dump:
             with open(self.data_for_ml_pickle_path, "wb") as pckl:
                 pickle.dump(self.data_for_ml, pckl)
-                pckl.close()
 
         df_test = data_lbl
         df_train = self.data_for_ml
@@ -475,7 +467,6 @@ class EnsembleClass:
         if use_ens_ftrs_arr_dump:
             with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
                 self.ens_ftrs_arr = pickle.load(pckl)
-                pckl.close()
         else:
             self.ens_ftrs_arr = self.features_distribution(n_classifiers=self.n_classifiers, n_features_in_clf=self.n_features_in_clf,
                             major_features_part=self.major_features_part, major_features_arr=self.major_features_arr,
@@ -500,7 +491,6 @@ class EnsembleClass:
         if save_ens_clf_arr:
             with open(self.ens_clf_arr_pickle_path, "wb") as pckl:
                 pickle.dump(self.clf_arr, pckl)
-                pckl.close()
         #---
 
 
@@ -509,13 +499,11 @@ class EnsembleClass:
         if self.ens_ftrs_arr is None:
             with open(self.ens_ftrs_arr_pickle_path, "rb") as pckl:
                 self.ens_ftrs_arr = pickle.load(pckl)
-                pckl.close()
             if print_log: print('\nens_ftrs_arr has been loaded.')
 
         if (self.clf_arr is None) or use_ens_clf_arr_dump:
             with open(self.ens_clf_arr_pickle_path, "rb") as pckl:
                 self.ens_clf = pickle.load(pckl)
-                pckl.close()
             if print_log: print('\nens_clf has been loaded.')
         if self.df_test is None:
             self.data_preparation(use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=print_log)
@@ -570,7 +558,6 @@ class EnsembleClass:
         if save_pred_df:
             with open(self.ens_pred_df_pickle_path, "wb") as pckl:
                 pickle.dump(df_pred, pckl)
-                pckl.close()
         if save_pred_statistics:
             pred_statcs_df = pd.DataFrame(data=list(zip(acc_arr, f1_arr, rtrn_arr, sr_arr, conf_matrix_arr,
                                         ftrs_imp_arr)), columns=['accuracy', 'f1', 'return', 'sharpe', 'conf_matrix',
@@ -578,7 +565,6 @@ class EnsembleClass:
             if print_log: print('pred_statcs_df:\n', pred_statcs_df)
             with open(self.ens_pred_statcs_pickle_path, "wb") as pckl:
                 pickle.dump(pred_statcs_df, pckl)
-                pckl.close()
 
 
 if __name__ == '__main__':
