@@ -480,6 +480,9 @@ class FeaturesSelectionClass:
                                            selection_by_return=True,
                                            acc_basic_level=0.5, rtrn_basic_level=0.,
                                            save_res_df=True, res_df_pickle_path='gen_ftrs_imp.pickle',
+                                           best_features_save=False, major_features_count=72, minor_features_count=128,
+                                           major_features_path='major_ftrs_arr.pickle',
+                                           minor_features_path='minor_ftrs_arr.pickle',
                                            print_log=True):
         """
         The function generalizes features importance from array of files with serialized dataframes
@@ -493,6 +496,11 @@ class FeaturesSelectionClass:
         :param rtrn_basic_level: float.
         :param save_res_df: boolean.
         :param res_df_pickle_path: string.
+        :param best_features_save: boolean.
+        :param major_features_count: integer.
+        :param minor_features_count: integer.
+        :param major_features_path: string.
+        :param minor_features_path: string
         :param print_log: boolean.
         :return: pandas series with generalized features importances.
         """
@@ -557,10 +565,27 @@ class FeaturesSelectionClass:
 
         gen_imp_df['total'] = gen_imp_df.sum(axis=1)
         gen_imp_df.sort_values(by='total', ascending=False, inplace=True)
+
         if print_log: print('gen_imp_df:\n', gen_imp_df)
         if save_res_df:
             with open(res_df_pickle_path, 'wb') as pckl:
                 pickle.dump(gen_imp_df, pckl)
+
+        if best_features_save:
+            major_features_arr = list(gen_imp_df.index[0:major_features_count])
+            minor_features_arr = list(gen_imp_df.index[major_features_count:(major_features_count + minor_features_count)])
+            with open(major_features_path, "wb") as pckl:
+                pickle.dump(major_features_arr, pckl)
+            with open(minor_features_path, "wb") as pckl:
+                pickle.dump(minor_features_arr, pckl)
+            print('\nThe major features:\n')
+            for i, item in enumerate(zip(gen_imp_df.index[:major_features_count],
+                                         gen_imp_df[:major_features_count]['total'].values), 1):
+                print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
+            print('\nThe minor features:\n')
+            for i, item in enumerate(zip(gen_imp_df.index[major_features_count:(major_features_count+minor_features_count)],
+                                         gen_imp_df[major_features_count:(major_features_count+minor_features_count)]['total'].values), 1):
+                print('{0:<2}. {1:<25}{2:.5f}'.format(i, item[0], item[1]))
 
         return gen_imp_df
 
@@ -625,10 +650,15 @@ if __name__ == '__main__':
     # print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
     feat_imp_filenames_arr = [req.folder_name+os.sep+file_name for file_name in req.feat_imp_filenames_arr]
     res_df_pickle_path = req.folder_name+os.sep+'gen_imp_df_v.1.0.pickle'
+    major_features_path = req.folder_name+os.sep+'ftrs_gen_major_arr_v1.0.pickle'
+    minor_features_path = req.folder_name+os.sep+'ftrs_gen_minor_arr_v1.0.pickle'
     res = req.features_importance_generalization(feat_imp_filenames_arr=feat_imp_filenames_arr,
                                                  clmn_names_arr=req.clmn_names_arr,
                                                  first_feature_number=14,
                                                  selection_by_return=True,
                                                  acc_basic_level=0.5, rtrn_basic_level=0.,
                                                  save_res_df=True, res_df_pickle_path=res_df_pickle_path,
+                                                 best_features_save=True, major_features_count=72,
+                                                 minor_features_count=128, major_features_path=major_features_path,
+                                                 minor_features_path=minor_features_path,
                                                  print_log=True)

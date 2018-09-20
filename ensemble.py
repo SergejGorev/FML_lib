@@ -9,6 +9,7 @@ import datetime as dt
 from sklearn.ensemble import VotingClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+import os
 import warnings
 
 class EnsembleClass:
@@ -237,7 +238,10 @@ class EnsembleClass:
     ftrs_major_arr_pickle_prefix = "ftrs_major_arr"
     ftrs_minor_arr_pickle_prefix = "ftrs_minor_arr"
 
+    ftrs_gen_major_filename = "ftrs_gen_major_arr_v1.0.pickle"
+    ftrs_gen_minor_filename = "ftrs_gen_minor_arr_v1.0.pickle"
 
+    #---
     price_step = 0.001
     train_start = dt.datetime(2005, 1, 1, 0, 0)
     test_start = dt.datetime(2017, 7, 1, 0, 0)
@@ -267,18 +271,18 @@ class EnsembleClass:
 
     def __init__(self):
         self.pickle_postfix = self.postfix + '_' + self.version + '.pickle'
-        self.data_pickle_path = self.folder_name + '\\' + self.data_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
-        self.label_pickle_path = self.folder_name + '\\' + self.label_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+        self.data_pickle_path = self.folder_name + os.sep + self.data_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.4.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.4.pickle"
+        self.label_pickle_path = self.folder_name + os.sep + self.label_pickle_file_name  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
 
         self.target_clmn =  self.target_clmn_prefix + self.postfix  # 'target_label_0i0025_1i0_1i0'
-        self.ensemble_pickle_path = self.folder_name + '\\' + self.ensemble_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
-        self.data_for_ml_pickle_path = self.folder_name + '\\' + self.data_for_ml_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
-        self.ens_ftrs_arr_pickle_path = self.folder_name + '\\' + self.ens_ftrs_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
-        self.ens_clf_arr_pickle_path = self.folder_name + '\\' + self.ens_clf_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
-        self.ens_pred_df_pickle_path = self.folder_name + '\\' + self.ens_pred_df_pickle_prefix+ self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
-        self.ens_pred_statcs_pickle_path = self.folder_name + '\\' + self.ens_pred_statcs_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
-        self.ftrs_major_arr_pickle_path = self.folder_name + '\\' + self.ftrs_major_arr_pickle_prefix + self.pickle_postfix
-        self.ftrs_minor_arr_pickle_path = self.folder_name + '\\' + self.ftrs_minor_arr_pickle_prefix + self.pickle_postfix
+        self.ensemble_pickle_path = self.folder_name + os.sep + self.ensemble_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ensemble_eurusd_5_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ensemble_eurusd_5_v1.0.pickle"
+        self.data_for_ml_pickle_path = self.folder_name + os.sep + self.data_for_ml_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\data_for_ml_test_1.0.pickle"
+        self.ens_ftrs_arr_pickle_path = self.folder_name + os.sep + self.ens_ftrs_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_ftrs_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_ftrs_arr_v1.0.pickle"
+        self.ens_clf_arr_pickle_path = self.folder_name + os.sep + self.ens_clf_arr_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_clf_arr_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_clf_arr_v1.0.pickle"
+        self.ens_pred_df_pickle_path = self.folder_name + os.sep + self.ens_pred_df_pickle_prefix+ self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_df_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_df_v1.0.pickle"
+        self.ens_pred_statcs_pickle_path = self.folder_name + os.sep + self.ens_pred_statcs_pickle_prefix + self.pickle_postfix  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/ens_pred_statcs_v1.0.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\ens_pred_statcs_v1.0.pickle"
+        self.ftrs_major_arr_pickle_path = self.folder_name + os.sep + self.ftrs_major_arr_pickle_prefix + self.pickle_postfix
+        self.ftrs_minor_arr_pickle_path = self.folder_name + os.sep + self.ftrs_minor_arr_pickle_prefix + self.pickle_postfix
         # print('data_pickle_path= '+self.data_pickle_path)
         # print('label_pickle_path= ' + self.label_pickle_path)
         # print('target_clmn= ' + self.target_clmn)
@@ -316,7 +320,11 @@ class EnsembleClass:
         return sum(probs)
 
 
-    def import_features_array(self, print_log=True):
+    def import_features_array(self, use_generalized_ftrs_arr=True, print_log=True):
+        if use_generalized_ftrs_arr:
+            self.ftrs_major_arr_pickle_path = self.folder_name + os.sep + self.ftrs_gen_major_filename
+            self.ftrs_minor_arr_pickle_path = self.folder_name + os.sep + self.ftrs_gen_minor_filename
+
         with open(self.ftrs_major_arr_pickle_path, "rb") as pckl:
             self.major_features_arr = pickle.load(pckl)
         if print_log: print('major_features_arr:\n {0}'.format(self.major_features_arr))
@@ -579,7 +587,7 @@ if __name__ == '__main__':
     print('time_start= {}'.format(time_start))
 
     req = EnsembleClass()
-    req.import_features_array()
+    req.import_features_array(use_generalized_ftrs_arr=True)
     feat_arr = req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
                               major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
                               minor_features_arr=req.minor_features_arr, save_dump=True,
