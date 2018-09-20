@@ -13,11 +13,11 @@ import os
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
-    label_pickle_file_name = "eurusd_5_v1_lbl_0i0035_1i0_1i0.pickle"
+    label_pickle_file_name = "feat_imp_0i0015_1i0_1i0_v1.0.pickle"
 
-    postfix = '_0i0035_1i0_1i0'
+    postfix = '_0i0015_1i0_1i0'
     version = 'v1.0'
     target_clmn_prefix = 'target_label'
     profit_value = 18
@@ -68,6 +68,13 @@ class FeaturesSelectionClass:
 
     @staticmethod
     def select_data_for_ml(data_lbl, price_step, target_clmn):
+        """
+        The function selects data from the whole dataset with defined price step.
+        :param data_lbl: pandas dataframe.
+        :param price_step: float.
+        :param target_clmn: string.
+        :return: pandas dataframe with selected data.
+        """
         data_sel_idx = finfunctions.getTEvents(data_lbl.open_ask, price_step)
         print('len(data_sel_idx)= {}'.format(len(data_sel_idx)))
         data_for_ml = data_lbl.loc[data_sel_idx, :]
@@ -79,6 +86,12 @@ class FeaturesSelectionClass:
 
     @staticmethod
     def set_testTimes(dt0, dt1):
+        """
+        The function creates array with the boundaries of the time periods.
+        :param dt0: datatime array.
+        :param dt1: datatime array.
+        :return: pandas series with the boundaries of the time periods.
+        """
         # формирование тестовых периодов
         testTimes = pd.Series(dt1, index=dt0)
         print('\ntestTimes:\n{}'.format(testTimes))
@@ -86,6 +99,12 @@ class FeaturesSelectionClass:
 
     @staticmethod
     def setting_features_array(data_lbl, last_clmn):
+        """
+        The function selects features from dataset columns.
+        :param data_lbl: pandas dataframe.
+        :param last_clmn: int.
+        :return: array with features names.
+        """
         features_arr = []
         features_arr.append(data_lbl.columns[17])
         features_arr.append(data_lbl.columns[16])
@@ -99,6 +118,23 @@ class FeaturesSelectionClass:
     def cross_val_xgb(df_train_, df_test_, testTimes_, features_for_ml_, target_clmn_, \
                       max_depth_=3, n_estimators_=100, n_jobs_=-1, calc_fin_stats=True, df_lbl=None,
                       profit_value=0., loss_value=0., print_log=True):
+        """
+        The function implements ML-model cross validation and returns evaluation statistics.
+        :param df_train_: pandas dataframe.
+        :param df_test_: pandas dataframe.
+        :param testTimes_: pandas series.
+        :param features_for_ml_: string array.
+        :param target_clmn_: string.
+        :param max_depth_: integer.
+        :param n_estimators_: integer.
+        :param n_jobs_: integer.
+        :param calc_fin_stats: boolean.
+        :param df_lbl: pandas dataframe.
+        :param profit_value: float.
+        :param loss_value: float.
+        :param print_log: boolean.
+        :return: dictionary with evaluation statistics.
+        """
         res_dict = {}
         acc_arr = []
         f1_arr = []
@@ -216,6 +252,10 @@ class FeaturesSelectionClass:
 
 
     def setting_features_count(self):
+        """
+        The function sets value of class variable n_features.
+        :return: None
+        """
         features_count = len(self.features_arr)
         n_features = int(features_count * self.features_part) if self.features_part <= 1. else features_count
         self.n_features = n_features
@@ -224,6 +264,12 @@ class FeaturesSelectionClass:
 
 
     def features_selection(self, data_lbl):
+        """
+        The function performs cyclic cross-validation testing with randomly selected features,
+        determines the relative features importance and forms and save a dataframe with evaluated statistics.
+        :param data_lbl: pandas dataframe.
+        :return: None.
+        """
         self.features_arr = self.setting_features_array(data_lbl, self.last_clmn)
         self.setting_features_count()
         # ---
@@ -313,6 +359,20 @@ class FeaturesSelectionClass:
                              best_features_save=False, major_features_count=72, minor_features_count=128,
                              major_features_path='major_ftrs_arr.pickle', minor_features_path='minor_ftrs_arr.pickle',
                              selection_by_return=False, print_log=True):
+        """
+        The function analyzes data from features importance dataframe
+        and generates aggregated statistics and ranking of features.
+        :param features_imp_arr_path: string.
+        :param first_feature_number: integer.
+        :param best_features_save: boolean.
+        :param major_features_count: integer.
+        :param minor_features_count: integer.
+        :param major_features_path: string.
+        :param minor_features_path: string.
+        :param selection_by_return: boolean.
+        :param print_log: boolean.
+        :return: tuple of arrays with major and minor features.
+        """
         with open(features_imp_arr_path, "rb") as pckl:
             feat_imp_df = pickle.load(pckl)
             pckl.close()
@@ -411,6 +471,10 @@ class FeaturesSelectionClass:
 
 
     def execute(self):
+        """
+        The function executes features selection cycle.
+        :return: None
+        """
         # --- dataframe load
         time_start = dt.datetime.now()
         print('time_start= {}'.format(time_start))
