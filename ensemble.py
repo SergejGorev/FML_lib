@@ -221,13 +221,13 @@ class EnsembleClass:
 
     folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #   r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
-    label_pickle_file_name = "eurusd_5_v1.1_lbl_0i0025_1i0_1i0.pickle"
+    label_pickle_file_name = "eurusd_5_v1_lbl_0i002_1i0_1i0.pickle"
 
-    postfix = '_0i0025_1i0_1i0'
+    postfix = '_0i002_1i0_1i0'
     version = 'v1.0'
     target_clmn_prefix = 'target_label'
-    profit_value = 23
-    loss_value = -25 #-25
+    profit_value = 18
+    loss_value = -20 #-25
     dump_ensemble_pickle = True # dump ensemble pickle
     ensemble_pickle_prefix = "ensemble_eurusd_5"
     data_for_ml_pickle_prefix = "data_for_ml_test"
@@ -587,15 +587,17 @@ if __name__ == '__main__':
     print('time_start= {}'.format(time_start))
 
     req = EnsembleClass()
-    req.import_features_array(use_generalized_ftrs_arr=True)
+    req.import_features_array(use_generalized_ftrs_arr=False)
     feat_arr = req.features_distribution(n_classifiers=req.n_classifiers, n_features_in_clf=req.n_features_in_clf,
                               major_features_part=req.major_features_part, major_features_arr=req.major_features_arr,
                               minor_features_arr=req.minor_features_arr, save_dump=True,
                               dump_file_path=req.ens_ftrs_arr_pickle_path, print_log=True)
     print("\nfeat_arr:\n", feat_arr)
 
+    # req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
+    #                  use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)
     req.ensemble_fit(n_classifiers=req.n_classifiers, use_ens_ftrs_arr_dump=True, save_ens_clf_arr=True,
-                     use_data_for_ml_dump=True, save_data_for_ml_dump=False, print_log=True)
+                     use_data_for_ml_dump=False, save_data_for_ml_dump=True, print_log=True)
 
     req.ensemble_predict(n_classifiers=req.n_classifiers, use_ens_clf_arr_dump=True, save_pred_df=True,
                          save_pred_statistics=True, print_log=True)
