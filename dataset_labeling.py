@@ -30,22 +30,7 @@ class LabelingClass:
     __labels_sell_clmn = ''
     __target_clmn = ''
 
-    #---
-    # TRIPLE-BARRIER LABELING METHOD (twosides version)
-    """
-    ◦ close : A pandas series of prices.
-    ◦ events : A pandas dataframe, with columns,
-        ◦ t1 : The timestamp of vertical barrier. When the value is np.nan , there will
-            not be a vertical barrier.
-        ◦ trgt : The unit width of the horizontal barriers.
-    ◦ tpSL : A list of two non-negative float values:
-        ◦ tpSL[0] :The factor that multiplies trgt to set the width of the upper barrier.
-            If 0, there will not be an upper barrier.
-        ◦ tpSL[1] :The factor that multiplies trgt to set the width of the lower barrier.
-            If 0, there will not be a lower barrier.
-    ◦ molecule : A list with the subset of event indices that will be processed by a
-        single thread. Its use will become clear later on in the chapter.
-    """
+
     def clmn_def(self):
         postfix = '_' + processing.digit_to_text(self.trgt) + '_' + processing.digit_to_text(self.tpSL[0]) + \
                   '_' + processing.digit_to_text(self.tpSL[1])
@@ -59,6 +44,21 @@ class LabelingClass:
         self.__target_clmn = self.lbl_bsc_names[2] + postfix
 
     def apply_tpSLOnT1_twosides(self, df, events, tpSL, molecule=None):
+        """
+        TRIPLE-BARRIER LABELING METHOD (twosides version)
+        ◦ df : A pandas dataframe of prices.
+        ◦ events : A pandas dataframe, with columns,
+            ◦ t1 : The timestamp of vertical barrier. When the value is np.nan , there will
+                not be a vertical barrier.
+            ◦ trgt : The unit width of the horizontal barriers.
+        ◦ tpSL : A list of two non-negative float values:
+            ◦ tpSL[0] :The factor that multiplies trgt to set the width of the upper barrier.
+                If 0, there will not be an upper barrier.
+            ◦ tpSL[1] :The factor that multiplies trgt to set the width of the lower barrier.
+                If 0, there will not be a lower barrier.
+        ◦ molecule : A list with the subset of event indices that will be processed by a
+            single thread. Its use will become clear later on in the chapter.
+        """
         open_ask = df['open_ask']
         high_ask = df['high_ask']
         low_ask = df['low_ask']

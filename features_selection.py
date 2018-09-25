@@ -9,20 +9,24 @@ from scipy import stats
 import copy
 import warnings
 import os
+from itertools import combinations
 
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
     folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
-    label_pickle_file_name = "feat_imp_0i0015_1i0_1i0_v1.0.pickle"
+    label_pickle_file_name = "eurusd_5_v1_lbl_0i0045_1i0_0i5.pickle"
 
-    postfix = '_0i0015_1i0_1i0'
+    postfix = '_0i0045_1i0_0i5'
     version = 'v1.0'
     target_clmn_prefix = 'target_label'
-    profit_value = 18
-    loss_value = -10 #-25
+    profit_value = 43
+    loss_value = -22.5 #-25
     dump_pickle = True # dump data pickle
+    purged_period = 3  #(days)
+
+
     f_i_pickle_prefix = "feat_imp"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\feat_imp_20180905_3.pickle"
     ftrs_major_arr_pickle_prefix = "ftrs_major_arr"
     ftrs_minor_arr_pickle_prefix = "ftrs_minor_arr"
@@ -35,8 +39,8 @@ class FeaturesSelectionClass:
                       '0i0025_1i0_1i0_v1.0']  # , '0i0035_1i0_1i0_v1.0'
 
     price_step = 0.001
-    # train_start = dt.datetime(2005, 1, 1, 0, 0)
-    # test_start = dt.datetime(2017, 7, 1, 0, 0)
+    start_date = dt.datetime(2008, 1, 1, 0, 0)
+    finish_date = dt.datetime(2018, 6, 15, 23, 59)
     dt0 = [dt.datetime(2009, 7, 1), dt.datetime(2011, 7, 1), dt.datetime(2013, 7, 1), dt.datetime(2015, 7, 1),
            dt.datetime(2017, 7, 1)]
     dt1 = [dt.datetime(2010, 6, 15), dt.datetime(2012, 6, 15), dt.datetime(2014, 6, 15), dt.datetime(2016, 6, 15),
@@ -254,6 +258,198 @@ class FeaturesSelectionClass:
             features_imp_dict[feature_name] = feature_arr_mean
         print('features_imp_dict:\n', features_imp_dict)
         res_dict['features_imp_dict'] = features_imp_dict
+        warnings.filterwarnings(action='default')
+        return res_dict
+
+
+    # !!! under development !!!
+    @staticmethod
+    def cpcv_xgb(df_train, df_test, df_lbl, features_for_ml, target_clmn,
+                 start_date=None, finish_date=None,
+                 purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
+                 profit_value=0., loss_value=0., print_log=True):
+        """
+        The function implements ML-model combinatorial purged cross validation and returns evaluation statistics.
+        :param df_train_: pandas dataframe.
+        :param df_test_: pandas dataframe.
+        :param features_for_ml_: string array.
+        :param target_clmn_: string.
+        :param purged_period: integer.
+            Purged period (days).
+        :param cpcv_n: integer.
+        :param cpcv_k: integer.
+        :param max_depth_: integer.
+        :param n_estimators_: integer.
+        :param n_jobs_: integer.
+        :param calc_fin_stats: boolean.
+        :param df_lbl: pandas dataframe.
+        :param profit_value: float.
+        :param loss_value: float.
+        :param print_log: boolean.
+        :return: dictionary with evaluation statistics.
+        """
+        res_dict = {}
+        rtrn_arr = []
+        sr_arr = []
+        #--- test parts combinations
+        test_periods_arr = list(combinations(range(cpcv_n), cpcv_k))
+        test_periods_count = len(test_periods_arr)
+        paths_count = int(test_periods_count*cpcv_k/cpcv_n)
+        # if print_log: print(test_periods_arr)
+        if print_log: print('test_periods_count= {0}, paths_count= {1}'.format(test_periods_count, paths_count))
+        paths_arr = [[] for i in range(cpcv_n)]
+        #---
+        #--- datasets cutting
+        if start_date is not None:
+            if print_log: print('start_date= {0}'.format(start_date))
+            df_train = df_train.loc[start_date<=df_train.index, :]
+            df_test = df_test.loc[start_date <= df_test.index, :]
+            df_lbl = df_lbl.loc[start_date <= df_lbl.index, :]
+
+        if finish_date is not None:
+            if print_log: print('finish_date= {0}'.format(finish_date))
+            df_train = df_train.loc[df_train.index<=finish_date, :]
+            df_test = df_test.loc[df_test.index <= finish_date, :]
+            df_lbl = df_lbl.loc[df_lbl.index <= finish_date, :]
+        #---
+        df_test['label_buy'] = df_lbl['label_buy']
+        df_test['label_sell'] = df_lbl['label_sell']
+        #--- periods split
+        total_ix = len(df_test.index)
+        part_len = int(total_ix / cpcv_n)
+        if print_log: print('total_ix= {0}, part_len= {1}'.format(total_ix, part_len))
+
+        curr_first_ix = 0
+        curr_last_ix = part_len
+        periods = []
+        for i in range(cpcv_n):
+            # print('i= {0}'.format(i))
+            if i < cpcv_n - 1:
+                periods.append([df_test.index[curr_first_ix], df_test.index[curr_last_ix]])
+                curr_first_ix = curr_last_ix + 1
+                curr_last_ix = curr_first_ix + part_len
+            else:
+                periods.append([df_test.index[curr_first_ix], df_test.index[-1]])
+        # print('periods:\n', periods)
+        if print_log:
+            for i, tm_arr in enumerate(periods, 0):
+                print(i, ': ', tm_arr)
+        #---
+        warnings.filterwarnings(action='ignore')
+        for num, test_periods in enumerate(test_periods_arr):
+            print('num= ', num)
+            train_periods = list(range(cpcv_n))
+            for i in test_periods: train_periods.remove(i)
+            if print_log: print('test_periods : ', test_periods)
+            if print_log: print('train_periods: ', train_periods)
+            #--- new train periods creating
+            last_period = cpcv_n - 1
+            new_periods = copy.deepcopy(periods)
+            for prd in test_periods:
+                print('prd= ', prd)
+                if prd == 0:
+                    purge = False
+                    embargo = True
+                elif prd == last_period:
+                    purge = True
+                    embargo = False
+                else:
+                    purge = True
+                    embargo = True
+
+                if purge:
+                    if prd - 1 not in test_periods:
+                        prev_finish_date = new_periods[prd - 1][1]
+                        finish_date = prev_finish_date - np.timedelta64(
+                            int(np.around(purged_period + .49, decimals=0)), 'D')
+                        if print_log: print('for {0}: prev_finish_date= {1}, finish_date= {2}'.format(prd - 1, prev_finish_date,
+                                                                                        finish_date))
+                        new_periods[prd - 1][1] = finish_date
+                if embargo:
+                    if prd + 1 not in test_periods:
+                        prev_start_date = new_periods[prd + 1][0]
+                        start_date = prev_start_date + np.timedelta64(int(np.around(purged_period + .49, decimals=0)),
+                                                                      'D')
+                        if print_log: print('for {0}: prev_start_date= {1}, start_date= {2}'.format(prd + 1, prev_start_date,
+                                                                                      start_date))
+                        new_periods[prd + 1][0] = start_date
+                if print_log: print()
+            if print_log:
+                print('periods (embargoed and purged):')
+                for i, tm_arr in enumerate(new_periods, 0):
+                    print(i, ': ', tm_arr)
+            #---
+            #--- train dataframe slicing
+            if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+            df_train_iter = pd.DataFrame()
+            for prd in train_periods:
+                start_date = new_periods[prd][0]
+                finish_date = new_periods[prd][1]
+                if print_log: print('prd= {0}: start_date= {1}, finish_date= {2}'.format(prd, start_date, finish_date))
+                df_train_part = df_train.loc[(start_date <= df_train.index) & (df_train.index <= finish_date), :]
+                # if print_log: print('df_train_part:\n', df_train_part)
+                df_train_iter = pd.concat((df_train_iter, df_train_part))
+                if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+            # if print_log: print('df_train_iter:\n', df_train_iter)
+            #---
+            #---
+            clf = XGBClassifier(max_depth=max_depth, n_estimators=n_estimators, n_jobs=n_jobs)
+            X_train_iter = df_train_iter.loc[:, features_for_ml]
+            y_train_iter = df_train_iter.loc[:, target_clmn]
+
+            clf.fit(X_train_iter, y_train_iter)
+
+            #--- test dataframe slicing
+            for prd in test_periods:
+                if print_log: print('prd= {}'.format(prd))
+                start_date = new_periods[prd][0]
+                finish_date = new_periods[prd][1]
+                if print_log: print('prd= {0}: start_date= {1}, finish_date= {2}'.format(prd, start_date, finish_date))
+                df_test_iter = df_test.loc[(start_date <= df_test.index) & (df_test.index <= finish_date), :]
+                # if print_log: print('df_test_iter:\n', df_test_iter)
+
+                X_test_iter = df_test_iter.loc[:, features_for_ml]
+
+                y_pred_iter = clf.predict(X_test_iter)
+
+                #--- financial statistics calculation
+                y_pred_series = pd.Series(data=y_pred_iter, index=df_test_iter.index)
+                fin_res = finfunctions.pred_return(y_pred=y_pred_series, label_buy=df_test_iter['label_buy'],
+                                                    label_sell=df_test_iter['label_sell'], profit_value=profit_value,
+                                                    loss_value=loss_value)
+                if print_log: print('fin_res:\n', fin_res)
+                paths_arr[prd].append(fin_res)
+            if print_log: print('----------------------------------------------------------------------------------\n')
+
+        #--- financial statistics calculation
+        for path, path_res in enumerate(paths_arr):
+            if print_log: print('path= {0}, path_res= {1}'.format(path, path_res))
+            df_test_res = pd.concat(path_res)
+            return_res = df_test_res['return'].sum()
+            rtrn_arr.append(return_res)
+            df_test_res['date'] = df_test_res.index
+            df_test_res['dt_date'] = df_test_res['date'].dt.date
+            day_returns = df_test_res.loc[:, ['dt_date', 'return']].groupby('dt_date').sum()
+            # if print_log: print(day_returns)
+            day_returns_values = day_returns.values
+            # if print_log: print(day_returns_values)
+            sqrt_ = np.sqrt(len(day_returns_values))
+            mean_ = np.mean(day_returns_values)
+            std_ = np.std(day_returns_values)
+            # if print_log: print("sqrt_= {0:.4f}, mean_= {1:.4f}, std_= {2:.4f}".format(sqrt_, mean_, std_))
+            sr_res = sqrt_ * mean_ / std_
+            sr_arr.append(sr_res)
+        #---
+        rtrn_mean = np.mean(rtrn_arr)
+        rtrn_std = np.std(rtrn_arr)
+        sr_mean = np.mean(sr_arr)
+        sr_std = np.std(sr_arr)
+        res_dict['rtrn_mean'] = rtrn_mean
+        res_dict['rtrn_std'] = rtrn_std
+        res_dict['rtrn_arr'] = rtrn_arr
+        res_dict['sr_mean'] = sr_mean
+        res_dict['sr_std'] = sr_std
+        res_dict['sr_arr'] = sr_arr
         warnings.filterwarnings(action='default')
         return res_dict
 
@@ -590,7 +786,89 @@ class FeaturesSelectionClass:
         return gen_imp_df
 
 
-    def execute(self):
+    def execute_cpcv(self):
+        """
+        The function executes CPCV testing.
+        :return: None
+        """
+        # --- dataframe load
+        time_start = dt.datetime.now()
+        print('time_start= {}'.format(time_start))
+
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+            label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+            lbl['label_buy'] = lbl[label_buy]
+            lbl['label_sell'] = lbl[label_sell]
+            lbl.drop(columns=[label_buy, label_sell], inplace=True)
+        print('lbl.shape: ', lbl.shape)
+        # ---
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        # ---
+        # del data
+        # del lbl
+
+        # data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+        #                                            target_clmn=self.target_clmn)
+        # with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "wb") as pckl:
+        #      pickle.dump(data_for_ml, pckl)
+
+        # ---
+        # загрузка датафрейма в тестовых целях
+        with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "rb") as pckl:
+            data_for_ml = pickle.load(pckl)
+        # ---
+
+        #---
+        features_for_ml = \
+            ['lr_duo_1440_5i0',
+             'lr_duo_1152_5i0',
+             'ema_720',
+             'lr_duo_288_5i0',
+             'adx_576',
+             'lr_duo_576_5i0',
+             'lr_duo_1152_2i5',
+             'lr_uno_1440_1i5',
+             'sr_1440',
+             'lr_uno_1440_5i0',
+             'lr_uno_1440_2i5',
+             'lr_duo_576_2i5',
+             'lr_duo_864_5i0',
+             'lr_duo_1440_2i5',
+             'lr_uno_1152_2i5',
+             'ema_576',
+             'lr_duo_720_5i0',
+             'lr_uno_1152_5i0',
+             'lr_uno_1152_1i5',
+             'ema_432',
+             'lr_duo_864_1i5',
+             'adx_432',
+             'tema_288',
+             'lr_duo_720_1i5',
+             'tema_12',
+             'tema_720',
+             'adx_720',
+             'dema_6',
+             'lr_duo_864_2i5',
+             'lr_duo_1440_1i5']
+        self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+                 start_date=self.start_date, finish_date=self.finish_date,
+                 purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
+                 profit_value=self.profit_value, loss_value=self.loss_value, print_log=True)
+        #---
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+
+    def execute_selection(self):
         """
         The function executes features selection cycle.
         :return: None
@@ -639,8 +917,9 @@ class FeaturesSelectionClass:
 
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
-    # req.execute()
-
+    # req.execute_selection()
+    #---
+    #---
     # res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
     #                                best_features_save=True, major_features_count=72, minor_features_count=128,
     #                                major_features_path=req.ftrs_major_arr_pickle_path,
@@ -648,17 +927,22 @@ if __name__ == '__main__':
     #                                selection_by_return=True,
     #                                print_log=True)
     # print('major features:\n{0}\nminor features:\n{1}'.format(res[0], res[1]))
-    feat_imp_filenames_arr = [req.folder_name+os.sep+file_name for file_name in req.feat_imp_filenames_arr]
-    res_df_pickle_path = req.folder_name+os.sep+'gen_imp_df_v.1.0.pickle'
-    major_features_path = req.folder_name+os.sep+'ftrs_gen_major_arr_v1.0.pickle'
-    minor_features_path = req.folder_name+os.sep+'ftrs_gen_minor_arr_v1.0.pickle'
-    res = req.features_importance_generalization(feat_imp_filenames_arr=feat_imp_filenames_arr,
-                                                 clmn_names_arr=req.clmn_names_arr,
-                                                 first_feature_number=14,
-                                                 selection_by_return=True,
-                                                 acc_basic_level=0.5, rtrn_basic_level=0.,
-                                                 save_res_df=True, res_df_pickle_path=res_df_pickle_path,
-                                                 best_features_save=True, major_features_count=72,
-                                                 minor_features_count=128, major_features_path=major_features_path,
-                                                 minor_features_path=minor_features_path,
-                                                 print_log=True)
+    #---
+    #---
+    # feat_imp_filenames_arr = [req.folder_name+os.sep+file_name for file_name in req.feat_imp_filenames_arr]
+    # res_df_pickle_path = req.folder_name+os.sep+'gen_imp_df_v.1.0.pickle'
+    # major_features_path = req.folder_name+os.sep+'ftrs_gen_major_arr_v1.0.pickle'
+    # minor_features_path = req.folder_name+os.sep+'ftrs_gen_minor_arr_v1.0.pickle'
+    # res = req.features_importance_generalization(feat_imp_filenames_arr=feat_imp_filenames_arr,
+    #                                              clmn_names_arr=req.clmn_names_arr,
+    #                                              first_feature_number=14,
+    #                                              selection_by_return=True,
+    #                                              acc_basic_level=0.5, rtrn_basic_level=0.,
+    #                                              save_res_df=True, res_df_pickle_path=res_df_pickle_path,
+    #                                              best_features_save=True, major_features_count=72,
+    #                                              minor_features_count=128, major_features_path=major_features_path,
+    #                                              minor_features_path=minor_features_path,
+    #                                              print_log=True)
+    #---
+    #---
+    req.execute_cpcv()
