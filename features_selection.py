@@ -262,7 +262,6 @@ class FeaturesSelectionClass:
         return res_dict
 
 
-    # !!! under development !!!
     @staticmethod
     def cpcv_xgb(df_train, df_test, df_lbl, features_for_ml, target_clmn,
                  start_date=None, finish_date=None,
@@ -297,7 +296,7 @@ class FeaturesSelectionClass:
         paths_count = int(test_periods_count*cpcv_k/cpcv_n)
         # if print_log: print(test_periods_arr)
         if print_log: print('test_periods_count= {0}, paths_count= {1}'.format(test_periods_count, paths_count))
-        paths_arr = [[] for i in range(cpcv_n)]
+        calc_arr = [[] for i in range(cpcv_n)]
         #---
         #--- datasets cutting
         if start_date is not None:
@@ -345,6 +344,7 @@ class FeaturesSelectionClass:
             #--- new train periods creating
             last_period = cpcv_n - 1
             new_periods = copy.deepcopy(periods)
+            if print_log: print('\nTime periods editing (purge and embargo applying):')
             for prd in test_periods:
                 print('prd= ', prd)
                 if prd == 0:
@@ -380,7 +380,7 @@ class FeaturesSelectionClass:
                     print(i, ': ', tm_arr)
             #---
             #--- train dataframe slicing
-            if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+            if print_log: print('\nTrain dataframe generation:')
             df_train_iter = pd.DataFrame()
             for prd in train_periods:
                 start_date = new_periods[prd][0]
@@ -389,7 +389,7 @@ class FeaturesSelectionClass:
                 df_train_part = df_train.loc[(start_date <= df_train.index) & (df_train.index <= finish_date), :]
                 # if print_log: print('df_train_part:\n', df_train_part)
                 df_train_iter = pd.concat((df_train_iter, df_train_part))
-                if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+                if print_log: print('-------------------------------------------------------------------------')
             # if print_log: print('df_train_iter:\n', df_train_iter)
             #---
             #---
@@ -400,8 +400,8 @@ class FeaturesSelectionClass:
             clf.fit(X_train_iter, y_train_iter)
 
             #--- test dataframe slicing
+            if print_log: print('\nTesting:')
             for prd in test_periods:
-                if print_log: print('prd= {}'.format(prd))
                 start_date = new_periods[prd][0]
                 finish_date = new_periods[prd][1]
                 if print_log: print('prd= {0}: start_date= {1}, finish_date= {2}'.format(prd, start_date, finish_date))
@@ -417,14 +417,22 @@ class FeaturesSelectionClass:
                 fin_res = finfunctions.pred_return(y_pred=y_pred_series, label_buy=df_test_iter['label_buy'],
                                                     label_sell=df_test_iter['label_sell'], profit_value=profit_value,
                                                     loss_value=loss_value)
-                if print_log: print('fin_res:\n', fin_res)
-                paths_arr[prd].append(fin_res)
-            if print_log: print('----------------------------------------------------------------------------------\n')
+                if print_log: print('return= {0:.2f}'.format(fin_res.sum()))
+                calc_arr[prd].append(fin_res)
+                if print_log: print('-------------------------------------------------------------------------')
+            if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+
+        #--- paths data aggregation
+        path_arr = [[] for i in range(paths_count)]
+        for i in range(len(calc_arr[0])):
+            for j in range(len(calc_arr)):
+                path_arr[i].append(calc_arr[j][i])
 
         #--- financial statistics calculation
-        for path, path_res in enumerate(paths_arr):
-            if print_log: print('path= {0}, path_res= {1}'.format(path, path_res))
+        for path, path_res in enumerate(path_arr):
+            if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
             df_test_res = pd.concat(path_res)
+            df_test_res = pd.DataFrame(df_test_res, columns=['return'])
             return_res = df_test_res['return'].sum()
             rtrn_arr.append(return_res)
             df_test_res['date'] = df_test_res.index
@@ -450,6 +458,7 @@ class FeaturesSelectionClass:
         res_dict['sr_mean'] = sr_mean
         res_dict['sr_std'] = sr_std
         res_dict['sr_arr'] = sr_arr
+        if print_log: print('res_dict:\n', res_dict)
         warnings.filterwarnings(action='default')
         return res_dict
 
@@ -824,7 +833,7 @@ class FeaturesSelectionClass:
         with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "rb") as pckl:
             data_for_ml = pickle.load(pckl)
         # ---
-
+        del data_lbl
         #---
         features_for_ml = \
             ['lr_duo_1440_5i0',
