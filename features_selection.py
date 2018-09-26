@@ -10,6 +10,8 @@ import copy
 import warnings
 import os
 from itertools import combinations
+from matplotlib import pyplot as plt
+
 
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
@@ -267,7 +269,8 @@ class FeaturesSelectionClass:
                  start_date=None, finish_date=None,
                  purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
                  profit_value=0., loss_value=0.,
-                 save_paths_return=False, pickle_path='path_return_df.pickle', print_log=True):
+                 save_paths_return=False, pickle_path='path_return_df.pickle',
+                 save_picture=False, picture_path='CPCV_testing_return.jpg', print_log=True):
         """
         The function implements ML-model combinatorial purged cross validation and returns evaluation statistics.
         :param df_train_: pandas dataframe.
@@ -482,10 +485,21 @@ class FeaturesSelectionClass:
             with open(pickle_path, 'wb') as pckl:
                 pickle.dump(paths_return_df, pckl)
         if print_log: print('res_dict:\n', res_dict)
+        if save_picture:
+            basic_columns = paths_return_df.columns
+            for clmn in basic_columns:
+                paths_return_df[clmn + '_cumsum'] = paths_return_df[clmn].cumsum()
+            add_columns = list(paths_return_df.columns)
+            for clmn in basic_columns:
+                add_columns.remove(clmn)
+            if print_log: print('\nadd_columns= ', add_columns)
+
+            fig, ax = plt.subplots(figsize=(15, 8))
+            paths_return_df[add_columns].plot(ax=ax, colormap=plt.cm.Spectral)
+            ax.set(title='CPCV testing return')
+            ax.grid()
+            fig.savefig(picture_path)
         warnings.filterwarnings(action='default')
-        time_finish = dt.datetime.now()
-        time_duration = time_finish - time_start
-        if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
         return res_dict
 
 
@@ -1063,11 +1077,13 @@ class FeaturesSelectionClass:
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
         pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
+        picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix + '.jpg'
         self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
-                 purged_period=3, cpcv_n=20, cpcv_k=3, max_depth=3, n_estimators=100, n_jobs=-1,
+                 purged_period=3, cpcv_n=5, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
                  profit_value=self.profit_value, loss_value=self.loss_value,
-                 save_paths_return=True, pickle_path=pickle_path, print_log=True)
+                 save_paths_return=True, pickle_path=pickle_path,
+                 save_picture=True, picture_path=picture_path, print_log=True)
         #---
 
         time_finish = dt.datetime.now()
