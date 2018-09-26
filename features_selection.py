@@ -16,13 +16,13 @@ class FeaturesSelectionClass:
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
     folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
-    label_pickle_file_name = "eurusd_5_v1_lbl_0i0045_1i0_0i5.pickle"
+    label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
-    postfix = '_0i0045_1i0_0i5'
+    postfix = '_0i003_1i0_0i5'
     version = 'v1.0'
     target_clmn_prefix = 'target_label'
-    profit_value = 43
-    loss_value = -22.5 #-25
+    profit_value = 28
+    loss_value = -15 #-25
     dump_pickle = True # dump data pickle
     purged_period = 3  #(days)
 
@@ -266,7 +266,8 @@ class FeaturesSelectionClass:
     def cpcv_xgb(df_train, df_test, df_lbl, features_for_ml, target_clmn,
                  start_date=None, finish_date=None,
                  purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
-                 profit_value=0., loss_value=0., print_log=True):
+                 profit_value=0., loss_value=0.,
+                 save_paths_return=False, pickle_path='path_return_df.pickle', print_log=True):
         """
         The function implements ML-model combinatorial purged cross validation and returns evaluation statistics.
         :param df_train_: pandas dataframe.
@@ -284,6 +285,7 @@ class FeaturesSelectionClass:
         :param df_lbl: pandas dataframe.
         :param profit_value: float.
         :param loss_value: float.
+        :param save_paths_return: boolean.
         :param print_log: boolean.
         :return: dictionary with evaluation statistics.
         """
@@ -345,6 +347,7 @@ class FeaturesSelectionClass:
             last_period = cpcv_n - 1
             new_periods = copy.deepcopy(periods)
             if print_log: print('\nTime periods editing (purge and embargo applying):')
+            if print_log: print('-------------------------------------------------------------------------')
             for prd in test_periods:
                 print('prd= ', prd)
                 if prd == 0:
@@ -373,7 +376,7 @@ class FeaturesSelectionClass:
                         if print_log: print('for {0}: prev_start_date= {1}, start_date= {2}'.format(prd + 1, prev_start_date,
                                                                                       start_date))
                         new_periods[prd + 1][0] = start_date
-                if print_log: print()
+                if print_log: print('-------------------------------------------------------------------------')
             if print_log:
                 print('periods (embargoed and purged):')
                 for i, tm_arr in enumerate(new_periods, 0):
@@ -381,6 +384,7 @@ class FeaturesSelectionClass:
             #---
             #--- train dataframe slicing
             if print_log: print('\nTrain dataframe generation:')
+            if print_log: print('-------------------------------------------------------------------------')
             df_train_iter = pd.DataFrame()
             for prd in train_periods:
                 start_date = new_periods[prd][0]
@@ -401,6 +405,7 @@ class FeaturesSelectionClass:
 
             #--- test dataframe slicing
             if print_log: print('\nTesting:')
+            if print_log: print('-------------------------------------------------------------------------')
             for prd in test_periods:
                 start_date = new_periods[prd][0]
                 finish_date = new_periods[prd][1]
@@ -420,6 +425,10 @@ class FeaturesSelectionClass:
                 if print_log: print('return= {0:.2f}'.format(fin_res.sum()))
                 calc_arr[prd].append(fin_res)
                 if print_log: print('-------------------------------------------------------------------------')
+            if print_log:
+                cur_calc_position = (num+1)/test_periods_count
+                if cur_calc_position>1: cur_calc_position=1
+                print('{0:.1%} is done'.format(cur_calc_position))
             if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
 
         #--- paths data aggregation
@@ -428,11 +437,16 @@ class FeaturesSelectionClass:
             for j in range(len(calc_arr)):
                 path_arr[i].append(calc_arr[j][i])
 
+        del calc_arr
         #--- financial statistics calculation
+        paths_return_df = None
         for path, path_res in enumerate(path_arr):
             if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
             df_test_res = pd.concat(path_res)
             df_test_res = pd.DataFrame(df_test_res, columns=['return'])
+            if path==0:
+                paths_return_df = pd.DataFrame(index=df_test_res.index)
+            paths_return_df['return_'+str(path)] = df_test_res['return']
             return_res = df_test_res['return'].sum()
             rtrn_arr.append(return_res)
             df_test_res['date'] = df_test_res.index
@@ -458,6 +472,10 @@ class FeaturesSelectionClass:
         res_dict['sr_mean'] = sr_mean
         res_dict['sr_std'] = sr_std
         res_dict['sr_arr'] = sr_arr
+        res_dict['paths_return_df'] = paths_return_df
+        if save_paths_return:
+            with open(pickle_path, 'wb') as pckl:
+                pickle.dump(paths_return_df, pckl)
         if print_log: print('res_dict:\n', res_dict)
         warnings.filterwarnings(action='default')
         return res_dict
@@ -836,40 +854,212 @@ class FeaturesSelectionClass:
         del data_lbl
         #---
         features_for_ml = \
-            ['lr_duo_1440_5i0',
-             'lr_duo_1152_5i0',
-             'ema_720',
-             'lr_duo_288_5i0',
-             'adx_576',
-             'lr_duo_576_5i0',
-             'lr_duo_1152_2i5',
-             'lr_uno_1440_1i5',
-             'sr_1440',
-             'lr_uno_1440_5i0',
-             'lr_uno_1440_2i5',
-             'lr_duo_576_2i5',
-             'lr_duo_864_5i0',
-             'lr_duo_1440_2i5',
-             'lr_uno_1152_2i5',
-             'ema_576',
-             'lr_duo_720_5i0',
-             'lr_uno_1152_5i0',
-             'lr_uno_1152_1i5',
-             'ema_432',
-             'lr_duo_864_1i5',
-             'adx_432',
-             'tema_288',
-             'lr_duo_720_1i5',
-             'tema_12',
-             'tema_720',
-             'adx_720',
-             'dema_6',
-             'lr_duo_864_2i5',
-             'lr_duo_1440_1i5']
+        ['lr_duo_1440_5i0',
+         'lr_duo_1152_5i0',
+         'ema_720',
+         'lr_duo_288_5i0',
+         'adx_576',
+         'lr_duo_576_5i0',
+         'lr_duo_1152_2i5',
+         'lr_uno_1440_1i5',
+         'sr_1440',
+         'lr_uno_1440_5i0',
+         'lr_uno_1440_2i5',
+         'lr_duo_576_2i5',
+         'lr_duo_864_5i0',
+         'lr_duo_1440_2i5',
+         'lr_uno_1152_2i5',
+         'ema_576',
+         'lr_duo_720_5i0',
+         'lr_uno_1152_5i0',
+         'lr_uno_1152_1i5',
+         'ema_432',
+         'lr_duo_864_1i5',
+         'adx_432',
+         'tema_288',
+         'lr_duo_720_1i5',
+         'tema_12',
+         'tema_720',
+         'adx_720',
+         'dema_6',
+         'lr_duo_864_2i5',
+         'lr_duo_1440_1i5',
+         'lr_duo_288_1i5',
+         'ema_288',
+         'adi_6',
+         'ema_60',
+         'tema_6',
+         'tema_190',
+         'lr_cmpr_1152_5i0',
+         'ema_18',
+         'open',
+         'tema_432',
+         'hurst_1440_10',
+         'tema_576',
+         'rtrn_864',
+         'dema_576',
+         'tema_24',
+         'lr_cmpr_1440_5i0',
+         'sr_432',
+         'ema_6',
+         'adx_144',
+         'dema_72',
+         'sr_720',
+         'tema_18',
+         'dema_12',
+         'adx_288',
+         'adi_720',
+         'rtrn_1440',
+         'ema_12',
+         'adi_1440',
+         'dema_108',
+         'dema_18',
+         'dema_432',
+         'lr_duo_108_5i0',
+         'ema_24',
+         'dema_144',
+         'lr_duo_72_5i0',
+         'adi_60',
+         'ema_48',
+         'bb_rp_1440_1i0',
+         'adi_12',
+         'hurst_720_50',
+         'adi_24',
+         'ema_72',
+         'lr_duo_1152_1i5',
+         'dema_288',
+         'adi_48',
+         'lr_cmpr_720_5i0',
+         'lr_duo_190_5i0',
+         'adi_18',
+         'ema_144',
+         'hurst_1440_25',
+         'ema_36',
+         'sr_576',
+         'adi_576',
+         'bb_rp_1440_3i0',
+         'hurst_1440_50',
+         'lr_cmpr_1440_2i5',
+         'adx_190',
+         'adi_36',
+         'tema_144',
+         'dema_720',
+         'ema_108',
+         'bb_rp_1440_2i0',
+         'tema_108',
+         'dema_190',
+         'lr_duo_190_2i5',
+         'hurst_576_50',
+         'cci_1440',
+         'hurst_576_25',
+         'adi_72',
+         'hurst_864_50',
+         'rsi_720',
+         'macd_s_117_234_78',
+         'dema_36',
+         'adx_108',
+         'dema_24',
+         'lr_cmpr_864_5i0',
+         'hurst_720_25',
+         'hurst_576_10',
+         'tema_72',
+         'adi_432',
+         'rtrn_1152',
+         'rtrn_720',
+         'hurst_864_10',
+         'lr_duo_720_2i5',
+         'rtrn_576',
+         'hurst_1152_50',
+         'adi_108',
+         'macd_117_234_78',
+         'sr_288',
+         'adi_144',
+         'ema_open_720',
+         'hurst_720_10',
+         'ema_cmpr_6_720',
+         'hurst_288_25',
+         'hurst_1152_10',
+         'lr_uno_576_1i5',
+         'lr_uno_288_1i5',
+         'lr_uno_576_2i5',
+         'cci_1152',
+         'rsi_576',
+         'hurst_288_50',
+         'lr_uno_864_5i0',
+         'lr_cmpr_576_2i5',
+         'cci_720',
+         'hurst_432_50',
+         'lr_cmpr_1152_1i5',
+         'hurst_432_10',
+         'lr_uno_864_2i5',
+         'lr_uno_576_5i0',
+         'cci_864',
+         'lr_duo_576_1i5',
+         'lr_uno_864_1i5',
+         'mfi_720',
+         'mfi_288',
+         'lr_duo_108_2i5',
+         'lr_uno_288_5i0',
+         'adi_288',
+         'hurst_864_25',
+         'mfi_576',
+         'lr_cmpr_1152_2i5',
+         'lr_uno_720_1i5',
+         'lr_cmpr_1440_1i5',
+         'ema_open_576',
+         'tema_open_720',
+         'hurst_1152_25',
+         'lr_cmpr_720_2i5',
+         'lr_uno_720_5i0',
+         'lr_duo_190_1i5',
+         'ema_open_288',
+         'lr_uno_288_2i5',
+         'tema_36',
+         'hurst_288_10',
+         'cci_576',
+         'tema_cmpr_6_720',
+         'cci_288',
+         'lr_cmpr_576_5i0',
+         'dema_open_720',
+         'cci_432',
+         'ema_open_432',
+         'mfi_432',
+         'lr_cmpr_864_2i5',
+         'ema_cmpr_6_288',
+         'dema_cmpr_6_720',
+         'dema_open_576',
+         'lr_uno_720_2i5',
+         'tema_open_576',
+         'hurst_432_25',
+         'lr_duo_288_2i5',
+         'bb_rp_576_1i0',
+         'lr_cmpr_864_1i5',
+         'dema_cmpr_6_432',
+         'bb_rp_576_2i0',
+         'bb_rp_720_1i0',
+         'lr_cmpr_576_1i5',
+         'dema_open_432',
+         'lr_uno_190_5i0',
+         'bb_rp_720_3i0',
+         'rtrn_190',
+         'so_k_234_2',
+         'bb_rp_288_3i0',
+         'lr_duo_36_5i0',
+         'lr_uno_190_1i5',
+         'rsi_144',
+         'so_d_234_2',
+         'bb_rp_576_3i0',
+         'bb_rp_720_2i0',
+         'adx_72',
+         'rtrn_144',
+         'lr_duo_108_1i5',
+         'lr_uno_190_2i5']
+        pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
         self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
-                 purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
-                 profit_value=self.profit_value, loss_value=self.loss_value, print_log=True)
+                 purged_period=3, cpcv_n=20, cpcv_k=3, max_depth=3, n_estimators=100, n_jobs=-1,
+                 profit_value=self.profit_value, loss_value=self.loss_value,
+                 save_paths_return=True, pickle_path=pickle_path, print_log=True)
         #---
 
         time_finish = dt.datetime.now()
