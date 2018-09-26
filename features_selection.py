@@ -337,8 +337,10 @@ class FeaturesSelectionClass:
                 print(i, ': ', tm_arr)
         #---
         warnings.filterwarnings(action='ignore')
+        time_start = dt.datetime.now()
+        if print_log: print('time_start= {}'.format(time_start))
         for num, test_periods in enumerate(test_periods_arr):
-            print('num= ', num)
+            if print_log: print('num= ', num)
             train_periods = list(range(cpcv_n))
             for i in test_periods: train_periods.remove(i)
             if print_log: print('test_periods : ', test_periods)
@@ -428,7 +430,10 @@ class FeaturesSelectionClass:
             if print_log:
                 cur_calc_position = (num+1)/test_periods_count
                 if cur_calc_position>1: cur_calc_position=1
-                print('{0:.1%} is done'.format(cur_calc_position))
+                time_cur = dt.datetime.now()
+                time_left = time_cur - time_start
+                time_est =  time_left/(num+1)*(test_periods_count-(num+1))
+                print('{0:.1%} is done. ETA= {1}'.format(cur_calc_position, time_est))
             if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
 
         #--- paths data aggregation
@@ -478,6 +483,9 @@ class FeaturesSelectionClass:
                 pickle.dump(paths_return_df, pckl)
         if print_log: print('res_dict:\n', res_dict)
         warnings.filterwarnings(action='default')
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
         return res_dict
 
 
@@ -818,10 +826,10 @@ class FeaturesSelectionClass:
         The function executes CPCV testing.
         :return: None
         """
-        # --- dataframe load
         time_start = dt.datetime.now()
         print('time_start= {}'.format(time_start))
 
+        # --- dataframe load
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
         print('\ndata.shape: ', data.shape)
