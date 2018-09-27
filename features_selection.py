@@ -1076,10 +1076,10 @@ class FeaturesSelectionClass:
          'rtrn_144',
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
-        cpcv_n = 5
+        cpcv_n = 10
         cpcv_k = 2
         max_depth = 3
-        n_estimators = 200
+        n_estimators = 100
         pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
         picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
                        str(cpcv_n)+'_'+ str(cpcv_k)+'_'+ str(max_depth)+'_'+ str(n_estimators)+'.jpg'
