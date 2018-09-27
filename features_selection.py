@@ -1098,15 +1098,17 @@ class FeaturesSelectionClass:
          'rtrn_144',
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
-        cpcv_n = 20
-        cpcv_k = 3
+        cpcv_n = 10
+        cpcv_k = 2
+        max_depth = 3
+        n_estimators = 100
         pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
         picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
-                       str(cpcv_n)+'_'+ str(cpcv_k)+'.jpg'
+                       str(cpcv_n)+'_'+ str(cpcv_k)+'_'+ str(max_depth)+'_'+ str(n_estimators)+'.jpg'
         self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
-                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=4, n_estimators=200, n_jobs=-1,
-                 profit_value=self.profit_value, loss_value=self.loss_value,
+                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                 n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
                  save_paths_return=True, pickle_path=pickle_path,
                  save_picture=True, picture_path=picture_path, print_log=True)
         #---
