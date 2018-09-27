@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -1079,10 +1079,11 @@ class FeaturesSelectionClass:
         cpcv_n = 20
         cpcv_k = 3
         pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
-        picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ cpcv_n+'_'+ cpcv_k+'.jpg'
+        picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
+                       str(cpcv_n)+'_'+ str(cpcv_k)+'.jpg'
         self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
-                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=3, n_estimators=100, n_jobs=-1,
+                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=4, n_estimators=200, n_jobs=-1,
                  profit_value=self.profit_value, loss_value=self.loss_value,
                  save_paths_return=True, pickle_path=pickle_path,
                  save_picture=True, picture_path=picture_path, print_log=True)
