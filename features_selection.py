@@ -270,7 +270,8 @@ class FeaturesSelectionClass:
                  purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
                  profit_value=0., loss_value=0.,
                  save_paths_return=False, pickle_path='path_return_df.pickle',
-                 save_picture=False, picture_path='CPCV_testing_return.jpg', print_log=True):
+                 save_picture=False, picture_path='CPCV_testing_return.jpg',
+                 pred_values_series_aggregation=False, print_log=True):
         """
         The function implements ML-model combinatorial purged cross validation and returns evaluation statistics.
         :param df_train_: pandas dataframe.
@@ -301,7 +302,8 @@ class FeaturesSelectionClass:
         paths_count = int(test_periods_count*cpcv_k/cpcv_n)
         # if print_log: print(test_periods_arr)
         if print_log: print('test_periods_count= {0}, paths_count= {1}'.format(test_periods_count, paths_count))
-        calc_arr = [[] for i in range(cpcv_n)]
+        calc_arr = [[] for i in range(cpcv_n)]  # array for return series
+        if pred_values_series_aggregation: pred_arr = [[] for i in range(cpcv_n)]  # array for predicted values series
         #---
         #--- datasets cutting
         if start_date is not None:
@@ -428,6 +430,7 @@ class FeaturesSelectionClass:
                                                     label_sell=df_test_iter['label_sell'], profit_value=profit_value,
                                                     loss_value=loss_value)
                 if print_log: print('return= {0:.2f}'.format(fin_res.sum()))
+                if pred_values_series_aggregation: pred_arr[prd].append(y_pred_series)
                 calc_arr[prd].append(fin_res)
                 if print_log: print('-------------------------------------------------------------------------')
             if print_log:
@@ -440,12 +443,30 @@ class FeaturesSelectionClass:
             if print_log: print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
 
         #--- paths data aggregation
+        if pred_values_series_aggregation:
+            path_pred_arr = [[] for i in range(paths_count)]
+            for i in range(len(pred_arr[0])):
+                for j in range(len(pred_arr)):
+                    path_pred_arr[i].append(pred_arr[j][i])
+
         path_arr = [[] for i in range(paths_count)]
         for i in range(len(calc_arr[0])):
             for j in range(len(calc_arr)):
                 path_arr[i].append(calc_arr[j][i])
 
         del calc_arr
+        del pred_arr
+        #---
+        paths_pred_df = None
+        if pred_values_series_aggregation:
+            for path, path_res in enumerate(path_pred_arr):
+                if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
+                df_test_res = pd.concat(path_res)
+                df_test_res = pd.DataFrame(df_test_res, columns=['y_pred'])
+                if path == 0:
+                    paths_pred_df = pd.DataFrame(index=df_test_res.index)
+                paths_pred_df['y_pred_' + str(path)] = df_test_res['y_pred']
+        #---
         #--- financial statistics calculation
         paths_return_df = None
         for path, path_res in enumerate(path_arr):
@@ -481,6 +502,7 @@ class FeaturesSelectionClass:
         res_dict['sr_std'] = sr_std
         res_dict['sr_arr'] = sr_arr
         res_dict['paths_return_df'] = paths_return_df
+        if pred_values_series_aggregation: res_dict['paths_pred_df'] = paths_pred_df
         if save_paths_return:
             with open(pickle_path, 'wb') as pckl:
                 pickle.dump(paths_return_df, pckl)
