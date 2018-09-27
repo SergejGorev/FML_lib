@@ -495,7 +495,7 @@ class FeaturesSelectionClass:
             if print_log: print('\nadd_columns= ', add_columns)
 
             fig, ax = plt.subplots(figsize=(15, 8))
-            paths_return_df[add_columns].plot(ax=ax, colormap=plt.cm.Spectral)
+            paths_return_df[add_columns].plot(ax=ax, colormap=plt.cm.Spectral, legend=False)
             ax.set(title='CPCV testing return')
             ax.grid()
             fig.savefig(picture_path)
