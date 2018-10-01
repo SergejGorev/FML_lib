@@ -1,4 +1,4 @@
-import finfunctions
+import finfunctions, processing
 import pandas as pd
 import numpy as np
 import datetime as dt
@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -269,9 +269,11 @@ class FeaturesSelectionClass:
                  start_date=None, finish_date=None,
                  purged_period=3, cpcv_n=6, cpcv_k=2, max_depth=3, n_estimators=100, n_jobs=-1,
                  profit_value=0., loss_value=0.,
+                 use_pred_proba=False, pred_proba_threshold=.505,
                  save_paths_return=False, pickle_path='path_return_df.pickle',
                  save_picture=False, picture_path='CPCV_testing_return.jpg',
-                 pred_values_series_aggregation=False, print_log=True):
+                 pred_values_series_aggregation=False,
+                 dump_model=False, print_log=True):
         """
         The function implements ML-model combinatorial purged cross validation and returns evaluation statistics.
         :param df_train_: pandas dataframe.
@@ -303,7 +305,9 @@ class FeaturesSelectionClass:
         # if print_log: print(test_periods_arr)
         if print_log: print('test_periods_count= {0}, paths_count= {1}'.format(test_periods_count, paths_count))
         calc_arr = [[] for i in range(cpcv_n)]  # array for return series
-        if pred_values_series_aggregation: pred_arr = [[] for i in range(cpcv_n)]  # array for predicted values series
+        if pred_values_series_aggregation:
+            pred_arr = [[] for i in range(cpcv_n)]  # array for predicted values series
+            if use_pred_proba: pred_proba_arr = [[] for i in range(cpcv_n)]
         #---
         #--- datasets cutting
         if start_date is not None:
@@ -409,7 +413,9 @@ class FeaturesSelectionClass:
             y_train_iter = df_train_iter.loc[:, target_clmn]
 
             clf.fit(X_train_iter, y_train_iter)
-
+            #--- dump model (mostly for test purposes)
+            if dump_model: clf.get_booster().dump_model('xgb_model_dump'+str(num)+'.dump', with_stats=True)
+            #---
             #--- test dataframe slicing
             if print_log: print('\nTesting:')
             if print_log: print('-------------------------------------------------------------------------')
@@ -422,15 +428,25 @@ class FeaturesSelectionClass:
 
                 X_test_iter = df_test_iter.loc[:, features_for_ml]
 
-                y_pred_iter = clf.predict(X_test_iter)
-
+                if use_pred_proba:
+                    y_pred_proba_iter = clf.predict_proba(X_test_iter)
+                    res_func = lambda x: -1 if x[0]>=pred_proba_threshold else (1 if x[1]>=pred_proba_threshold else 0)
+                    y_pred_iter = list(map(res_func, y_pred_proba_iter))
+                    # if print_log: print('y_pred_iter:\n', y_pred_iter)
+                    y_pred_proba_df = pd.DataFrame(data=y_pred_proba_iter, index=df_test_iter.index,
+                                                       columns=['proba_m', 'proba_p'])
+                else:
+                    y_pred_iter = clf.predict(X_test_iter)
+                    # if print_log: print('y_pred_proba_df:\n', y_pred_proba_df)
                 #--- financial statistics calculation
                 y_pred_series = pd.Series(data=y_pred_iter, index=df_test_iter.index)
                 fin_res = finfunctions.pred_return(y_pred=y_pred_series, label_buy=df_test_iter['label_buy'],
                                                     label_sell=df_test_iter['label_sell'], profit_value=profit_value,
                                                     loss_value=loss_value)
                 if print_log: print('return= {0:.2f}'.format(fin_res.sum()))
-                if pred_values_series_aggregation: pred_arr[prd].append(y_pred_series)
+                if pred_values_series_aggregation:
+                    pred_arr[prd].append(y_pred_series)
+                    if use_pred_proba: pred_proba_arr[prd].append(y_pred_proba_df)
                 calc_arr[prd].append(fin_res)
                 if print_log: print('-------------------------------------------------------------------------')
             if print_log:
@@ -448,17 +464,25 @@ class FeaturesSelectionClass:
             for i in range(len(pred_arr[0])):
                 for j in range(len(pred_arr)):
                     path_pred_arr[i].append(pred_arr[j][i])
-
+            if use_pred_proba:
+                path_pred_proba_arr = [[] for i in range(paths_count)]
+                for i in range(len(pred_proba_arr[0])):
+                    for j in range(len(pred_proba_arr)):
+                        path_pred_proba_arr[i].append(pred_proba_arr[j][i])
+                if print_log: print('path_pred_proba_arr:\n', path_pred_proba_arr)
+        #---
         path_arr = [[] for i in range(paths_count)]
         for i in range(len(calc_arr[0])):
             for j in range(len(calc_arr)):
                 path_arr[i].append(calc_arr[j][i])
-
+        #---
         del calc_arr
         del pred_arr
         #---
         paths_pred_df = None
+        paths_pred_proba_df = None
         if pred_values_series_aggregation:
+            if print_log: print('path_pred_arr processing...')
             for path, path_res in enumerate(path_pred_arr):
                 if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
                 df_test_res = pd.concat(path_res)
@@ -466,6 +490,17 @@ class FeaturesSelectionClass:
                 if path == 0:
                     paths_pred_df = pd.DataFrame(index=df_test_res.index)
                 paths_pred_df['y_pred_' + str(path)] = df_test_res['y_pred']
+            if use_pred_proba:
+                if print_log: print('path_pred_proba_arr processing...')
+                for path, path_res in enumerate(path_pred_proba_arr):
+                    if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
+                    df_test_res = pd.concat(path_res, axis=0)
+                    df_test_res = pd.DataFrame(df_test_res, columns=['proba_m', 'proba_p'])
+                    # if print_log: print('df_test_res:\n', df_test_res)
+                    if path==0:
+                        paths_pred_proba_df = pd.DataFrame(index=df_test_res.index)
+                    paths_pred_proba_df['proba_m_' + str(path)] = df_test_res['proba_m']
+                    paths_pred_proba_df['proba_p_' + str(path)] = df_test_res['proba_p']
         #---
         #--- financial statistics calculation
         paths_return_df = None
@@ -502,7 +537,10 @@ class FeaturesSelectionClass:
         res_dict['sr_std'] = sr_std
         res_dict['sr_arr'] = sr_arr
         res_dict['paths_return_df'] = paths_return_df
-        if pred_values_series_aggregation: res_dict['paths_pred_df'] = paths_pred_df
+        if pred_values_series_aggregation:
+            res_dict['paths_pred_df'] = paths_pred_df
+            if use_pred_proba:
+                res_dict['paths_pred_proba_df'] = paths_pred_proba_df
         if save_paths_return:
             with open(pickle_path, 'wb') as pckl:
                 pickle.dump(paths_return_df, pckl)
@@ -1101,17 +1139,27 @@ class FeaturesSelectionClass:
         cpcv_n = 5
         cpcv_k = 2
         max_depth = 3
-        n_estimators = 100
-        pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
-        picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
-                       str(cpcv_n)+'_'+ str(cpcv_k)+'_'+ str(max_depth)+'_'+ str(n_estimators)+'.jpg'
+        n_estimators = 2
+        use_pred_proba = True
+        pred_proba_threshold = .505  #.505
+        if use_pred_proba:
+            pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.postfix + '_' + self.version +\
+                          '_pred_prob_'+processing.digit_to_text(pred_proba_threshold) + '.pickle'
+            picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix + '_' + \
+                           str(cpcv_n) + '_' + str(cpcv_k) + '_' + str(max_depth) + '_' + str(n_estimators)  + '_' +\
+                           self.version + '_pred_prob_'+processing.digit_to_text(pred_proba_threshold)+ '.jpg'
+        else:
+            pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
+            picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
+                           str(cpcv_n)+'_'+ str(cpcv_k)+'_'+ str(max_depth)+'_'+ str(n_estimators)+'.jpg'
         res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
                  purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
                  n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                 use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
                  save_paths_return=True, pickle_path=pickle_path,
                  save_picture=True, picture_path=picture_path,
-                 pred_values_series_aggregation=True, print_log=True)
+                 pred_values_series_aggregation=True, dump_model=True, print_log=True)
         #---
         with open(self.folder_name + os.sep + "paths_pred_df.pickle", "wb") as pckl:
             pickle.dump(res['paths_pred_df'], pckl)
