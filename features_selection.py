@@ -414,7 +414,9 @@ class FeaturesSelectionClass:
 
             clf.fit(X_train_iter, y_train_iter)
             #--- dump model (mostly for test purposes)
-            if dump_model: clf.get_booster().dump_model('xgb_model_dump'+str(num)+'.dump', with_stats=True)
+            if dump_model: clf.get_booster().dump_model('xgb_model_dump'+str(cpcv_n)+'_'+str(cpcv_k)+'_'+\
+                                                        str(max_depth)+'_'+str(n_estimators)+'__'+str(num)+ '.dump',
+                                                        with_stats=True)
             #---
             #--- test dataframe slicing
             if print_log: print('\nTesting:')
@@ -1139,7 +1141,7 @@ class FeaturesSelectionClass:
         cpcv_n = 5
         cpcv_k = 2
         max_depth = 3
-        n_estimators = 2
+        n_estimators = 5
         use_pred_proba = True
         pred_proba_threshold = .505  #.505
         if use_pred_proba:
