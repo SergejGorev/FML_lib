@@ -1141,7 +1141,7 @@ class FeaturesSelectionClass:
         cpcv_n = 5
         cpcv_k = 2
         max_depth = 3
-        n_estimators = 5
+        n_estimators = 100
         use_pred_proba = True
         pred_proba_threshold = .505  #.505
         if use_pred_proba:
