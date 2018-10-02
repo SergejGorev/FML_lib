@@ -414,7 +414,7 @@ class FeaturesSelectionClass:
 
             clf.fit(X_train_iter, y_train_iter)
             #--- dump model (mostly for test purposes)
-            if dump_model: clf.get_booster().dump_model('xgb_model_dump'+str(cpcv_n)+'_'+str(cpcv_k)+'_'+\
+            if dump_model: clf.get_booster().dump_model('xgb_model_dump'+'_'+str(cpcv_n)+'_'+str(cpcv_k)+'_'+\
                                                         str(max_depth)+'_'+str(n_estimators)+'__'+str(num)+ '.dump',
                                                         with_stats=True)
             #---
@@ -471,7 +471,7 @@ class FeaturesSelectionClass:
                 for i in range(len(pred_proba_arr[0])):
                     for j in range(len(pred_proba_arr)):
                         path_pred_proba_arr[i].append(pred_proba_arr[j][i])
-                if print_log: print('path_pred_proba_arr:\n', path_pred_proba_arr)
+                # if print_log: print('path_pred_proba_arr:\n', path_pred_proba_arr)
         #---
         path_arr = [[] for i in range(paths_count)]
         for i in range(len(calc_arr[0])):
