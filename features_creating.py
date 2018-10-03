@@ -695,6 +695,41 @@ class FeaturesCalcClass:
         return df
 
 
+    def update_df(self, data):
+        #--- dataframe load
+        time_start = dt.datetime.now()
+        print('time_start= {}'.format(time_start))
+        #---
+
+        #---
+        print("Hurst calculation...")
+        data = self.run_hurst_calc(data, True)
+        #---
+        data = self.ema_calc(data)
+        data = self.run_sharpe_calc(data)
+        data = self.run_adi_calc(data)
+        data = self.bb_calc(data)
+        data = self.so_calc(data)
+        data = self.rsi_calc(data)
+        data = self.cci_calc(data)
+        data = self.adx_calc(data)
+        data = self.dema_calc(data)
+        data = self.tema_calc(data)
+        data = self.macd_calc(data)
+        data = self.mfi_calc(data)
+        data = self.lr_calc(data)
+        data = self.return_calc(data)
+        #---
+
+        if self.dump_pickle:
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(data, pckl)
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+
+
     def execute(self):
         #--- dataframe load
         time_start = dt.datetime.now()
