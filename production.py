@@ -570,11 +570,17 @@ class Production:
                     rows_count = price_df_for_concat.shape[0]
                     my_str = "\nrows_count= "+str(rows_count)
                     self.log_and_print(my_str)
-
+                    #---
+                    #--- features calculation
                     feat_cr = features_creating.FeaturesCalcClass()
+                    feat_cr.deep_print_log = False
                     feat_cr.data_pickle_path_for_dump = self.df_upd_pickles[model_ix]
-                    feat_cr.update_df(data_df_new)
+                    feat_cr.update_df(data_df_new, print_log=False)
                     print('data_df_new:\n', data_df_new)
+                    #---
+                    my_str = '-------------------------------------------------------------------------'
+                    self.log_and_print(my_str)
+                    #---
 
             #         data_added_update(data_df_new, rows_count=rows_count, indx=model_ix)
             #         data_df = data_df_new
@@ -724,15 +730,15 @@ class Production:
             #         #     self.log_and_print(my_str)
             #         # #---
             #
-            #     finish_time = dt.datetime.now()
-            #     duration = finish_time-start_time
-            #     my_str = u'\n\ncalculation duration= {0}, finish_time= {1}'.format(duration, finish_time)
-            #     self.log_and_print(my_str)
-            #     my_str = "\n________________________________________________________________________\n"
-            #     self.log_and_print(my_str)
-            #
-            #     if log_save:
-            #         log_file.flush()
+                finish_time = dt.datetime.now()
+                duration = finish_time-start_time
+                my_str = u'\ncalculation duration= {0}, finish_time= {1}'.format(duration, finish_time)
+                self.log_and_print(my_str)
+                my_str = "\n________________________________________________________________________________\n"
+                self.log_and_print(my_str)
+
+                if self.log_save:
+                    self.log_file.flush()
             else:
                 time.sleep(self.sleep_time)
 

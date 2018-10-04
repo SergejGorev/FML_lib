@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+import warnings
 import pickle
+
 
 
 def test_func(*args):
@@ -13,7 +15,8 @@ def test_func(*args):
 
 # Hurst exponention function
 def hurst_ernie_chan(p, lags):
-    variancetau = [];
+    warnings.filterwarnings('ignore')
+    variancetau = []
     tau = []
 
     for lag in lags:
@@ -33,7 +36,7 @@ def hurst_ernie_chan(p, lags):
     m = np.polyfit(np.log10(tau), np.log10(variancetau), 1)
 
     hurst = m[0] / 2
-
+    warnings.filterwarnings('default')
     return hurst
 
 

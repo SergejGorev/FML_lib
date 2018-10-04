@@ -9,11 +9,13 @@ import datetime as dt
 import time
 import random
 import pickle
+import warnings
 #import sys
 
 
 class FeaturesCalcClass:
     #---
+    deep_print_log = True
     num_threads = 8  # 16
     data_pickle_path = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/eurusd_5_v1.pickle"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD\eurusd_5_v1.pickle"
     dump_pickle = True # dump data pickle
@@ -181,13 +183,13 @@ class FeaturesCalcClass:
             ADI value.
         """
         df_calc = df.loc[:, [price_high_clmn, price_low_clmn, price_close_clmn]]
-        roll_res = df_calc.rolling(window=window, center=False).apply(np.max).values
+        roll_res = df_calc.rolling(window=window, center=False).apply(np.max, raw=True).values
         df_calc['high_roll'] = [x[0] for x in roll_res]
         df_calc['low_roll'] = [x[1] for x in roll_res]
         df_calc['close_roll'] = [x[2] for x in roll_res]
         df_calc['open'] = df[price_open_clmn]
         df_calc['volume'] = df[vol_clmn]
-        df_calc['vol_roll'] = df_calc['volume'].rolling(window=window, center=False).apply(np.sum)
+        df_calc['vol_roll'] = df_calc['volume'].rolling(window=window, center=False).apply(np.sum, raw=True)
         df_calc['high_roll'] = df_calc['high_roll'].shift(1)
         df_calc['low_roll'] = df_calc['low_roll'].shift(1)
         df_calc['close_roll'] = df_calc['close_roll'].shift(1)
@@ -263,21 +265,21 @@ class FeaturesCalcClass:
         lags = args[3]
 
         result = (new_clmn_names[0], df['open'].rolling(window=tmprd_hurst, center=False).apply(
-                                                                        lambda x: finfunctions.hurst_ernie_chan(x, lags)))
-        print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
+                                                        lambda x: finfunctions.hurst_ernie_chan(x, lags), raw=True))
+        if self.deep_print_log: print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
         return args[1], result
 
 
-    def run_hurst_calc(self, df, dump_pickle=True):
+    def run_hurst_calc(self, df, dump_pickle=True, print_log=True):
         time_start = dt.datetime.now()
-        print('hurst: time_start= {}'.format(time_start))
-        print('cpu_count() = %d\n' % mp.cpu_count())
+        if print_log: print('hurst: time_start= {}'.format(time_start))
+        if print_log: print('cpu_count() = %d\n' % mp.cpu_count())
 
         #--- Create pool
-        print('Creating pool with %d processes\n' % self.num_threads)
+        if print_log: print('Creating pool with %d processes\n' % self.num_threads)
         pool = mp.Pool(self.num_threads)
-        print('pool = %s' % pool)
-        print()
+        if print_log: print('pool = %s' % pool)
+        if print_log: print()
 
         TASKS = []
 
@@ -293,12 +295,12 @@ class FeaturesCalcClass:
 
         for r in results:
             res = r.get()
-            print('\t', res)
-            print('type(res)= {0}, res= \n{1}'.format(type(res), res))
+            if print_log: print('\t', res)
+            if print_log: print('type(res)= {0}, res= \n{1}'.format(type(res), res))
             clmn_name = res[0][0]
-            print('res[1][1]: \n', res[1][1])
+            if print_log: print('res[1][1]: \n', res[1][1])
             clmn_data = res[1][1].values
-            print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
+            if print_log: print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
             df[clmn_name] = clmn_data
 
         if dump_pickle:
@@ -307,7 +309,7 @@ class FeaturesCalcClass:
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
-        print('hurst: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+        if print_log: print('hurst: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
         for item in self.hurst_compare_arr:
             clmn_1 = self.hurst_base_clmn_name + '_' + processing.digit_to_text(item[0]) + '_' + \
@@ -321,11 +323,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def ema_calc(self, df):
+    def ema_calc(self, df, print_log=True):
         for tmprd_ema in self.ema_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_ema)
             new_clmn_names = [self.ema_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.EMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_ema}
             # print('ema_test: ', self.ema_fin_func(df['open'].values, tmprd_ema))
@@ -349,23 +351,24 @@ class FeaturesCalcClass:
         new_clmn_names = args[1]
         tmprd_sr = args[2]
 
-        result = (new_clmn_names[0], df['open'].rolling(window=tmprd_sr, center=False).apply(func=self.sharpe_ratio_feature))
-        print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
+        result = (new_clmn_names[0], df['open'].rolling(window=tmprd_sr, center=False).apply(
+                                                                            func=self.sharpe_ratio_feature, raw=True))
+        if self.deep_print_log: print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
         return args[1], result
 
 
-    def run_sharpe_calc(self, df, dump_pickle=True):
+    def run_sharpe_calc(self, df, dump_pickle=True, print_log=True):
         time_start = dt.datetime.now()
-        print('sharpe: time_start= {}'.format(time_start))
-        print('cpu_count() = %d\n' % mp.cpu_count())
+        if print_log: print('sharpe: time_start= {}'.format(time_start))
+        if print_log: print('cpu_count() = %d\n' % mp.cpu_count())
 
         df['return'] = df['open'].pct_change()
 
         #--- Create pool
-        print('Creating pool with %d processes\n' % self.num_threads)
+        if print_log: print('Creating pool with %d processes\n' % self.num_threads)
         pool = mp.Pool(self.num_threads)
-        print('pool = %s' % pool)
-        print()
+        if print_log: print('pool = %s' % pool)
+        if print_log: print()
 
         TASKS = []
 
@@ -379,12 +382,12 @@ class FeaturesCalcClass:
 
         for r in results:
             res = r.get()
-            print('\t', res)
-            print('type(res)= {0}, res= \n{1}'.format(type(res), res))
+            if print_log: print('\t', res)
+            if print_log: print('type(res)= {0}, res= \n{1}'.format(type(res), res))
             clmn_name = res[0][0]
-            print('res[1][1]: \n', res[1][1])
+            if print_log: print('res[1][1]: \n', res[1][1])
             clmn_data = res[1][1]
-            print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
+            if print_log: print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
             df[clmn_name] = clmn_data
 
         for item in self.sr_compare_arr:
@@ -411,22 +414,22 @@ class FeaturesCalcClass:
         tmprd_adi = args[2]
 
         result = (new_clmn_names[0], self.adi(df, tmprd_adi, 'open', 'high', 'low', 'close', 'volume_aver'))
-        print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
+        if self.deep_print_log: print('%s says result for args %s = %s' % (mp.current_process().name, args[1], result))
         return args[1], result
 
 
-    def run_adi_calc(self, df, dump_pickle=True):
+    def run_adi_calc(self, df, dump_pickle=True, print_log=True):
         time_start = dt.datetime.now()
-        print('adi: time_start= {}'.format(time_start))
-        print('cpu_count() = %d\n' % mp.cpu_count())
+        if print_log: print('adi: time_start= {}'.format(time_start))
+        if print_log: print('cpu_count() = %d\n' % mp.cpu_count())
 
         df['volume_aver'] = (df['volume_ask'] + df['volume_bid']) / 2
 
         #--- Create pool
-        print('Creating pool with %d processes\n' % self.num_threads)
+        if print_log: print('Creating pool with %d processes\n' % self.num_threads)
         pool = mp.Pool(self.num_threads)
-        print('pool = %s' % pool)
-        print()
+        if print_log: print('pool = %s' % pool)
+        if print_log: print()
 
         TASKS = []
 
@@ -440,12 +443,12 @@ class FeaturesCalcClass:
 
         for r in results:
             res = r.get()
-            print('\t', res)
-            print('type(res)= {0}, res= \n{1}'.format(type(res), res))
+            if print_log: print('\t', res)
+            if print_log: print('type(res)= {0}, res= \n{1}'.format(type(res), res))
             clmn_name = res[0][0]
-            print('res[1][1]: \n', res[1][1])
+            if print_log: print('res[1][1]: \n', res[1][1])
             clmn_data = res[1][1]
-            print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
+            if print_log: print('clmn_name= {0}, clmn_data:\n {1}'.format(clmn_name, clmn_data))
             df[clmn_name] = clmn_data
 
         for item in self.adi_compare_arr:
@@ -461,18 +464,18 @@ class FeaturesCalcClass:
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
-        print('adi: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+        if print_log: print('adi: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
         return df
 
 
-    def bb_calc(self, df):
+    def bb_calc(self, df, print_log=True):
         for tmprd_bb in self.bb_tmprd_arr:
             for d in self.bb_d_arr:
                 nbdevup, nbdevdn = d, d
                 postfix = '_' + processing.digit_to_text(tmprd_bb) + '_' + processing.digit_to_text(d)
                 new_clmn_names = [name + postfix for name in self.bb_base_clmn_names]
-                print('new_clmn_names: ', new_clmn_names)
+                if print_log: print('new_clmn_names: ', new_clmn_names)
                 inp = {'df': df, 'function': tl.BBANDS, 'add_columns': new_clmn_names,
                        'real': df['open'].values, 'timeperiod': tmprd_bb, 'nbdevup': nbdevup, 'nbdevdn': nbdevdn,
                        'matype': 0}
@@ -496,11 +499,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def so_calc(self, df):
+    def so_calc(self, df, print_log=True):
         for param_so in self.so_param_arr:
             postfix = '_' + processing.digit_to_text(param_so[0]) + '_' + processing.digit_to_text(param_so[1])
             new_clmn_names = [name + postfix for name in self.so_base_clmn_names]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.STOCH, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'fastk_period': param_so[0], 'slowk_period': int(param_so[0] * self.so_k_slowk_period),
@@ -521,11 +524,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def rsi_calc(self, df):
+    def rsi_calc(self, df, print_log=True):
         for tmprd_rsi in self.rsi_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_rsi)
             new_clmn_names = [self.rsi_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.RSI, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_rsi}
             df = processing.features_add(**inp)
@@ -540,11 +543,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def cci_calc(self, df):
+    def cci_calc(self, df, print_log=True):
         for tmprd_cci in self.cci_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_cci)
             new_clmn_names = [self.cci_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.CCI, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'timeperiod': tmprd_cci}
@@ -560,11 +563,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def adx_calc(self, df):
+    def adx_calc(self, df, print_log=True):
         for tmprd_adx in self.adx_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_adx)
             new_clmn_names = [self.adx_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.ADX, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'timeperiod': tmprd_adx}
@@ -580,11 +583,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def dema_calc(self, df):
+    def dema_calc(self, df, print_log=True):
         for tmprd_dema in self.dema_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_dema)
             new_clmn_names = [self.dema_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.DEMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_dema}
             df = processing.features_add(**inp)
@@ -602,11 +605,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def tema_calc(self, df):
+    def tema_calc(self, df, print_log=True):
         for tmprd_tema in self.tema_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_tema)
             new_clmn_names = [self.tema_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.TEMA, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'timeperiod': tmprd_tema}
             df = processing.features_add(**inp)
@@ -624,12 +627,12 @@ class FeaturesCalcClass:
         return df
 
 
-    def macd_calc(self, df):
+    def macd_calc(self, df, print_log=True):
         for params_macd in self.macd_params_arr:
             postfix = '_' + processing.digit_to_text(params_macd[0]) \
                       + '_' + processing.digit_to_text(params_macd[1]) + '_' + processing.digit_to_text(params_macd[2])
             new_clmn_names = [name + postfix for name in self.macd_base_clmn_names]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.MACD, 'add_columns': new_clmn_names, 'shift': 0,
                    'real': df['open'].values, 'fastperiod': params_macd[0], 'slowperiod': params_macd[1],
                    'signalperiod': params_macd[2]}
@@ -638,12 +641,12 @@ class FeaturesCalcClass:
         return df
 
 
-    def mfi_calc(self, df):
+    def mfi_calc(self, df, print_log=True):
         df['volume_aver'] = (df['volume_ask'] + df['volume_bid']) / 2
         for tmprd_mfi in self.mfi_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_mfi)
             new_clmn_names = [self.mfi_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             inp = {'df': df, 'function': tl.MFI, 'add_columns': new_clmn_names, 'shift': 1,
                    'high': df['high'].values, 'low': df['low'].values, 'close': df['close'].values,
                    'volume': df['volume_aver'].values, 'timeperiod': tmprd_mfi}
@@ -659,12 +662,12 @@ class FeaturesCalcClass:
         return df
 
 
-    def lr_calc(self, df):
+    def lr_calc(self, df, print_log=True):
         for tmprd_lr in self.lr_tmprd_arr:
             for mult_lr in self.lr_mult_arr:
                 postfix = '_' + processing.digit_to_text(tmprd_lr) + '_' + processing.digit_to_text(mult_lr)
                 new_clmn_names = [name + postfix for name in self.lr_base_clmn_names]
-                print('new_clmn_names: ', new_clmn_names)
+                if print_log: print('new_clmn_names: ', new_clmn_names)
                 tmprd_lr_1 = tmprd_lr
                 df[new_clmn_names[0]] = tl.LINEARREG_SLOPE(df['open'].values, timeperiod=tmprd_lr_1)
 
@@ -677,11 +680,11 @@ class FeaturesCalcClass:
         return df
 
 
-    def return_calc(self, df):
+    def return_calc(self, df, print_log=True):
         for tmprd_rtrn in self.rtrn_tmprd_arr:
             postfix = '_' + processing.digit_to_text(tmprd_rtrn)
             new_clmn_names = [self.rtrn_base_clmn_name + postfix]
-            print('new_clmn_names: ', new_clmn_names)
+            if print_log: print('new_clmn_names: ', new_clmn_names)
             df[new_clmn_names[0]] = df['open'].rolling(window=tmprd_rtrn, center=False).apply(
                                                                         lambda x: self.return_feature(x))
 
@@ -695,31 +698,33 @@ class FeaturesCalcClass:
         return df
 
 
-    def update_df(self, data):
+    def update_df(self, data, print_log=True):
+        warnings.filterwarnings('ignore')
         #--- dataframe load
         time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
+        print('features updating: time_start= {}'.format(time_start))
         #---
 
         #---
-        print("Hurst calculation...")
-        data = self.run_hurst_calc(data, True)
+        if print_log: print("Hurst calculation...")
+        data = self.run_hurst_calc(data, dump_pickle=True, print_log=print_log)
         #---
-        data = self.ema_calc(data)
-        data = self.run_sharpe_calc(data)
-        data = self.run_adi_calc(data)
-        data = self.bb_calc(data)
-        data = self.so_calc(data)
-        data = self.rsi_calc(data)
-        data = self.cci_calc(data)
-        data = self.adx_calc(data)
-        data = self.dema_calc(data)
-        data = self.tema_calc(data)
-        data = self.macd_calc(data)
-        data = self.mfi_calc(data)
-        data = self.lr_calc(data)
-        data = self.return_calc(data)
+        data = self.ema_calc(data, print_log=print_log)
+        data = self.run_sharpe_calc(data, print_log=print_log)
+        data = self.run_adi_calc(data, print_log=print_log)
+        data = self.bb_calc(data, print_log=print_log)
+        data = self.so_calc(data, print_log=print_log)
+        data = self.rsi_calc(data, print_log=print_log)
+        data = self.cci_calc(data, print_log=print_log)
+        data = self.adx_calc(data, print_log=print_log)
+        data = self.dema_calc(data, print_log=print_log)
+        data = self.tema_calc(data, print_log=print_log)
+        data = self.macd_calc(data, print_log=print_log)
+        data = self.mfi_calc(data, print_log=print_log)
+        data = self.lr_calc(data, print_log=print_log)
+        data = self.return_calc(data, print_log=print_log)
         #---
+        warnings.filterwarnings('default')
 
         if self.dump_pickle:
             with open(self.data_pickle_path_for_dump, "wb") as pckl:
@@ -727,36 +732,36 @@ class FeaturesCalcClass:
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
-        print('time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+        print('features updating: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
 
-    def execute(self):
+    def execute(self, print_log=True):
         #--- dataframe load
         time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
+        print('features creating: time_start= {}'.format(time_start))
 
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
         #---
 
         #---
-        print("Hurst calculation...")
-        data = self.run_hurst_calc(data, True)
+        if print_log: print("Hurst calculation...")
+        data = self.run_hurst_calc(data, dump_pickle=True, print_log=print_log)
         #---
-        data = self.ema_calc(data)
-        data = self.run_sharpe_calc(data)
-        data = self.run_adi_calc(data)
-        data = self.bb_calc(data)
-        data = self.so_calc(data)
-        data = self.rsi_calc(data)
-        data = self.cci_calc(data)
-        data = self.adx_calc(data)
-        data = self.dema_calc(data)
-        data = self.tema_calc(data)
-        data = self.macd_calc(data)
-        data = self.mfi_calc(data)
-        data = self.lr_calc(data)
-        data = self.return_calc(data)
+        data = self.ema_calc(data, print_log=print_log)
+        data = self.run_sharpe_calc(data, print_log=print_log)
+        data = self.run_adi_calc(data, print_log=print_log)
+        data = self.bb_calc(data, print_log=print_log)
+        data = self.so_calc(data, print_log=print_log)
+        data = self.rsi_calc(data, print_log=print_log)
+        data = self.cci_calc(data, print_log=print_log)
+        data = self.adx_calc(data, print_log=print_log)
+        data = self.dema_calc(data, print_log=print_log)
+        data = self.tema_calc(data, print_log=print_log)
+        data = self.macd_calc(data, print_log=print_log)
+        data = self.mfi_calc(data, print_log=print_log)
+        data = self.lr_calc(data, print_log=print_log)
+        data = self.return_calc(data, print_log=print_log)
         #---
 
         if self.dump_pickle:
@@ -765,7 +770,7 @@ class FeaturesCalcClass:
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
-        print('time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+        print('features creating: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
 
 if __name__ == '__main__':
