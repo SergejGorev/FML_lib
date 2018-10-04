@@ -1141,7 +1141,7 @@ class FeaturesSelectionClass:
         cpcv_n = 5
         cpcv_k = 2
         max_depth = 3
-        n_estimators = 100
+        n_estimators = 5
         use_pred_proba = True
         pred_proba_threshold = .505  #.505
         if use_pred_proba:
@@ -1165,6 +1165,300 @@ class FeaturesSelectionClass:
         #---
         with open(self.folder_name + os.sep + "paths_pred_df.pickle", "wb") as pckl:
             pickle.dump(res['paths_pred_df'], pckl)
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+
+    def cpcv_mean_decrease_efficiency(self):
+        """
+        The function executes CPCV testing.
+        :return: None
+        """
+        time_start = dt.datetime.now()
+        print('time_start= {}'.format(time_start))
+
+        # --- dataframe load
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+            label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+            lbl['label_buy'] = lbl[label_buy]
+            lbl['label_sell'] = lbl[label_sell]
+            lbl.drop(columns=[label_buy, label_sell], inplace=True)
+        print('lbl.shape: ', lbl.shape)
+        # ---
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        # ---
+        # del data
+        # del lbl
+
+        # data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+        #                                            target_clmn=self.target_clmn)
+        # with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "wb") as pckl:
+        #      pickle.dump(data_for_ml, pckl)
+
+        # ---
+        # загрузка датафрейма в тестовых целях
+        with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "rb") as pckl:
+            data_for_ml = pickle.load(pckl)
+        # ---
+        del data_lbl
+        #---
+        features_for_ml = \
+        ['lr_duo_1440_5i0',
+         'lr_duo_1152_5i0',
+         'ema_720',
+         'lr_duo_288_5i0',
+         'adx_576',
+         'lr_duo_576_5i0',
+         'lr_duo_1152_2i5',
+         'lr_uno_1440_1i5',
+         'sr_1440',
+         'lr_uno_1440_5i0',
+         'lr_uno_1440_2i5',
+         'lr_duo_576_2i5',
+         'lr_duo_864_5i0',
+         'lr_duo_1440_2i5',
+         'lr_uno_1152_2i5',
+         'ema_576',
+         'lr_duo_720_5i0',
+         'lr_uno_1152_5i0',
+         'lr_uno_1152_1i5',
+         'ema_432',
+         'lr_duo_864_1i5',
+         'adx_432',
+         'tema_288',
+         'lr_duo_720_1i5',
+         'tema_12',
+         'tema_720',
+         'adx_720',
+         'dema_6',
+         'lr_duo_864_2i5',
+         'lr_duo_1440_1i5',
+         'lr_duo_288_1i5',
+         'ema_288',
+         'adi_6',
+         'ema_60',
+         'tema_6',
+         'tema_190',
+         'lr_cmpr_1152_5i0',
+         'ema_18',
+         'open',
+         'tema_432',
+         'hurst_1440_10',
+         'tema_576',
+         'rtrn_864',
+         'dema_576',
+         'tema_24',
+         'lr_cmpr_1440_5i0',
+         'sr_432',
+         'ema_6',
+         'adx_144',
+         'dema_72',
+         'sr_720',
+         'tema_18',
+         'dema_12',
+         'adx_288',
+         'adi_720',
+         'rtrn_1440',
+         'ema_12',
+         'adi_1440',
+         'dema_108',
+         'dema_18',
+         'dema_432',
+         'lr_duo_108_5i0',
+         'ema_24',
+         'dema_144',
+         'lr_duo_72_5i0',
+         'adi_60',
+         'ema_48',
+         'bb_rp_1440_1i0',
+         'adi_12',
+         'hurst_720_50',
+         'adi_24',
+         'ema_72',
+         'lr_duo_1152_1i5',
+         'dema_288',
+         'adi_48',
+         'lr_cmpr_720_5i0',
+         'lr_duo_190_5i0',
+         'adi_18',
+         'ema_144',
+         'hurst_1440_25',
+         'ema_36',
+         'sr_576',
+         'adi_576',
+         'bb_rp_1440_3i0',
+         'hurst_1440_50',
+         'lr_cmpr_1440_2i5',
+         'adx_190',
+         'adi_36',
+         'tema_144',
+         'dema_720',
+         'ema_108',
+         'bb_rp_1440_2i0',
+         'tema_108',
+         'dema_190',
+         'lr_duo_190_2i5',
+         'hurst_576_50',
+         'cci_1440',
+         'hurst_576_25',
+         'adi_72',
+         'hurst_864_50',
+         'rsi_720',
+         'macd_s_117_234_78',
+         'dema_36',
+         'adx_108',
+         'dema_24',
+         'lr_cmpr_864_5i0',
+         'hurst_720_25',
+         'hurst_576_10',
+         'tema_72',
+         'adi_432',
+         'rtrn_1152',
+         'rtrn_720',
+         'hurst_864_10',
+         'lr_duo_720_2i5',
+         'rtrn_576',
+         'hurst_1152_50',
+         'adi_108',
+         'macd_117_234_78',
+         'sr_288',
+         'adi_144',
+         'ema_open_720',
+         'hurst_720_10',
+         'ema_cmpr_6_720',
+         'hurst_288_25',
+         'hurst_1152_10',
+         'lr_uno_576_1i5',
+         'lr_uno_288_1i5',
+         'lr_uno_576_2i5',
+         'cci_1152',
+         'rsi_576',
+         'hurst_288_50',
+         'lr_uno_864_5i0',
+         'lr_cmpr_576_2i5',
+         'cci_720',
+         'hurst_432_50',
+         'lr_cmpr_1152_1i5',
+         'hurst_432_10',
+         'lr_uno_864_2i5',
+         'lr_uno_576_5i0',
+         'cci_864',
+         'lr_duo_576_1i5',
+         'lr_uno_864_1i5',
+         'mfi_720',
+         'mfi_288',
+         'lr_duo_108_2i5',
+         'lr_uno_288_5i0',
+         'adi_288',
+         'hurst_864_25',
+         'mfi_576',
+         'lr_cmpr_1152_2i5',
+         'lr_uno_720_1i5',
+         'lr_cmpr_1440_1i5',
+         'ema_open_576',
+         'tema_open_720',
+         'hurst_1152_25',
+         'lr_cmpr_720_2i5',
+         'lr_uno_720_5i0',
+         'lr_duo_190_1i5',
+         'ema_open_288',
+         'lr_uno_288_2i5',
+         'tema_36',
+         'hurst_288_10',
+         'cci_576',
+         'tema_cmpr_6_720',
+         'cci_288',
+         'lr_cmpr_576_5i0',
+         'dema_open_720',
+         'cci_432',
+         'ema_open_432',
+         'mfi_432',
+         'lr_cmpr_864_2i5',
+         'ema_cmpr_6_288',
+         'dema_cmpr_6_720',
+         'dema_open_576',
+         'lr_uno_720_2i5',
+         'tema_open_576',
+         'hurst_432_25',
+         'lr_duo_288_2i5',
+         'bb_rp_576_1i0',
+         'lr_cmpr_864_1i5',
+         'dema_cmpr_6_432',
+         'bb_rp_576_2i0',
+         'bb_rp_720_1i0',
+         'lr_cmpr_576_1i5',
+         'dema_open_432',
+         'lr_uno_190_5i0',
+         'bb_rp_720_3i0',
+         'rtrn_190',
+         'so_k_234_2',
+         'bb_rp_288_3i0',
+         'lr_duo_36_5i0',
+         'lr_uno_190_1i5',
+         'rsi_144',
+         'so_d_234_2',
+         'bb_rp_576_3i0',
+         'bb_rp_720_2i0',
+         'adx_72',
+         'rtrn_144',
+         'lr_duo_108_1i5',
+         'lr_uno_190_2i5']
+        cpcv_n = 5
+        cpcv_k = 2
+        max_depth = 3
+        n_estimators = 5
+        use_pred_proba = True
+        pred_proba_threshold = .505  #.505
+        res_dic = {}
+        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+                 start_date=self.start_date, finish_date=self.finish_date,
+                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                 n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                 use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                 save_paths_return=False, pickle_path='',
+                 save_picture=False, picture_path='',
+                 pred_values_series_aggregation=True, dump_model=False, print_log=True)
+        #---
+        sr_base = res['sr_mean']
+        res_dic['_base_sr'] = (sr_base, 0.)
+        print(res_dic)
+        #---
+        print('***************************************************************************************************')
+        time_loop_start = dt.datetime.now()
+        arr_len = len(features_for_ml)
+        for i, ftr in enumerate(features_for_ml, 1):
+            print('i= {0}, removed feature= {1}'.format(i, ftr))
+            features_for_ml_copy = copy.deepcopy(features_for_ml)
+            features_for_ml_copy.remove(ftr)
+            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_copy, self.target_clmn,
+                     start_date=self.start_date, finish_date=self.finish_date,
+                     purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                     n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                     use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                     save_paths_return=False, pickle_path='',
+                     save_picture=False, picture_path='',
+                     pred_values_series_aggregation=True, dump_model=False, print_log=True)
+            sr_cur = res['sr_mean']
+            res_dic[ftr] = (sr_cur, sr_cur-sr_base)
+            # print(res_dic)
+            time_cur = dt.datetime.now()
+            time_left = time_cur - time_loop_start
+            time_eta = time_left/i*(arr_len-i)
+            print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
+            print('***************************************************************************************************')
+
+
+        with open(self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic.pickle", "wb") as pckl:
+            pickle.dump(res_dic, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
@@ -1248,4 +1542,6 @@ if __name__ == '__main__':
     #                                              print_log=True)
     #---
     #---
-    req.execute_cpcv()
+    # req.execute_cpcv()
+    #---
+    req.cpcv_mean_decrease_efficiency()
