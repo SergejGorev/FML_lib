@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
+    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  #  r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -507,6 +507,7 @@ class FeaturesSelectionClass:
         #--- financial statistics calculation
         paths_return_df = None
         for path, path_res in enumerate(path_arr):
+            if print_log: print('financial statistics calculation...')
             if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
             df_test_res = pd.concat(path_res)
             df_test_res = pd.DataFrame(df_test_res, columns=['return'])
@@ -1138,8 +1139,8 @@ class FeaturesSelectionClass:
          'rtrn_144',
          'lr_duo_108_1i5',
          'lr_uno_190_2i5']
-        cpcv_n = 5
-        cpcv_k = 2
+        cpcv_n = 20
+        cpcv_k = 3
         max_depth = 3
         n_estimators = 5
         use_pred_proba = True
