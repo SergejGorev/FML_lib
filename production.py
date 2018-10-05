@@ -575,7 +575,6 @@ class Production:
                     feat_cr = features_creating.FeaturesCalcClass()
                     feat_cr.deep_print_log = False
                     feat_cr.data_pickle_path_for_dump = self.df_upd_pickles[model_ix]
-                    feat_cr.update_df(data_df_new, print_log=False)
                     print('data_df_new:\n', data_df_new)
                     #---
                     my_str = '-------------------------------------------------------------------------'
