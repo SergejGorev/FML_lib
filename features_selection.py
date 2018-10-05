@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
+    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -1611,7 +1611,7 @@ class FeaturesSelectionClass:
             print('***************************************************************************************************')
 
 
-        with open(self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic.pickle", "wb") as pckl:
+        with open(self.folder_name + os.sep + "ftrs_mean_incr_eff_res_dic.pickle", "wb") as pckl:
             pickle.dump(res_dic, pckl)
 
         time_finish = dt.datetime.now()
