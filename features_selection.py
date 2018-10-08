@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
+    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -506,8 +506,8 @@ class FeaturesSelectionClass:
         #---
         #--- financial statistics calculation
         paths_return_df = None
+        if print_log: print('financial statistics calculation...')
         for path, path_res in enumerate(path_arr):
-            if print_log: print('financial statistics calculation...')
             if print_log: print('path= {0}, len(path_res)= {1}'.format(path, len(path_res)))
             df_test_res = pd.concat(path_res)
             df_test_res = pd.DataFrame(df_test_res, columns=['return'])
@@ -666,6 +666,53 @@ class FeaturesSelectionClass:
             time_eta = (time_est/(step+1))*(self.n_loops-(step+1)) if (self.n_loops-(step+1)) != 0. else 0.
             print('\n{0:.2%} is done. time_eta= {1}'.format((step+1)/self.n_loops, time_eta))
             print('\n----------------------------------------------------------------------------------------------------\n')
+
+
+    def features_selection_execute(self):
+        """
+        The function executes features selection cycle.
+        :return: None
+        """
+        # --- dataframe load
+        time_start = dt.datetime.now()
+        print('time_start= {}'.format(time_start))
+
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+        print('lbl.shape: ', lbl.shape)
+
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        self.last_clmn = data.shape[1]
+        print('self.last_clmn= ', self.last_clmn)
+        print('last 5 columns: ', data_lbl.columns[self.last_clmn-5 : self.last_clmn])
+        # ---
+        del data
+        del lbl
+        self.testTimes = self.set_testTimes(dt0=self.dt0, dt1=self.dt1)
+
+        self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+                                                   target_clmn=self.target_clmn)
+
+        # # ---
+        # # загрузка датафрейма в тестовых целях
+        # with open(r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_1.0.pickle", "rb") as pckl:
+        #     data_for_ml = pickle.load(pckl)
+        # self.data_for_ml = data_for_ml
+        # # ---
+
+        #---
+        self.features_selection(data_lbl)
+        #---
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
 
 
     @staticmethod
@@ -1177,15 +1224,73 @@ class FeaturesSelectionClass:
         print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
 
 
-    def cpcv_mean_decrease_efficiency(self):
+    def cpcv_mean_decrease_efficiency(self, data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                      cpcv_n=5, cpcv_k=2, max_depth=3, n_estimators=5, use_pred_proba=True,
+                                      pred_proba_threshold=.5, dump_res_dic=True,
+                                      dump_file_path='ftrs_mean_decr_eff_res_dic.pickle', print_log=True):
         """
         The function executes CPCV testing.
         :return: None
         """
-        print('cpcv_mean_decrease_efficiency starts...\n')
+        if print_log: print('\ncpcv_mean_decrease_efficiency starts...\n')
         time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
+        if print_log: print('time_start= {}'.format(time_start))
 
+        #---
+        features_for_ml = features_for_ml_kernel
+        features_for_ml.extend(features_for_ml_additional)
+        #---
+        res_dic = {}
+        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+                 start_date=self.start_date, finish_date=self.finish_date,
+                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                 n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                 use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                 save_paths_return=False, pickle_path='',
+                 save_picture=False, picture_path='',
+                 pred_values_series_aggregation=True, dump_model=False, print_log=True)
+        #---
+        sr_base = res['sr_mean']
+        res_dic['_base_sr'] = (sr_base, 0.)
+        if print_log: print(res_dic)
+        #---
+        if print_log: print('***************************************************************************************************')
+        time_loop_start = dt.datetime.now()
+        arr_len = len(features_for_ml_additional)
+        for i, ftr in enumerate(features_for_ml_additional, 1):
+            if print_log: print('i= {0}, removed feature= {1}'.format(i, ftr))
+            features_for_ml_copy = copy.deepcopy(features_for_ml)
+            features_for_ml_copy.remove(ftr)
+            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_copy, self.target_clmn,
+                     start_date=self.start_date, finish_date=self.finish_date,
+                     purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                     n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                     use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                     save_paths_return=False, pickle_path='',
+                     save_picture=False, picture_path='',
+                     pred_values_series_aggregation=True, dump_model=False, print_log=True)
+            sr_cur = res['sr_mean']
+            delta = sr_cur - sr_base
+            res_dic[ftr] = (sr_cur, delta)
+            # print(res_dic)
+            time_cur = dt.datetime.now()
+            time_left = time_cur - time_loop_start
+            time_eta = time_left/i*(arr_len-i)
+            if print_log: print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
+            if print_log: print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
+            if print_log: print('***************************************************************************************************')
+
+        if dump_res_dic:
+            with open(dump_file_path, "wb") as pckl:
+                pickle.dump(res_dic, pckl)
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+        return res_dic
+
+    def cpcv_mean_decrease_efficiency_execute(self):
         # --- dataframe load
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
@@ -1217,14 +1322,14 @@ class FeaturesSelectionClass:
             data_for_ml = pickle.load(pckl)
         # ---
         del data_lbl
-        #---
+        # ---
         features_for_ml_kernel = \
             ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
              'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
              'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
              'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
              'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
-        features_for_ml_add = \
+        features_for_ml_additional = \
             ['tema_6', 'tema_12', 'dema_6', 'tema_24', 'ema_6', 'tema_18',
              'ema_12', 'dema_24', 'dema_18', 'ema_18', 'dema_12', 'open',
              'dema_720', 'ema_144', 'ema_108', 'dema_72', 'ema_288', 'adi_24',
@@ -1440,17 +1545,34 @@ class FeaturesSelectionClass:
         #  'lr_uno_190_2i5']
         #---
         #---
-        features_for_ml = features_for_ml_kernel
-        features_for_ml.extend(features_for_ml_add)
-        #---
         cpcv_n = 5
         cpcv_k = 2
         max_depth = 3
         n_estimators = 5
         use_pred_proba = True
-        pred_proba_threshold = .505  #.505
+        pred_proba_threshold = .505  # .505
+        dump_res_dic = True
+        dump_file_path = self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic.pickle"
+        self.cpcv_mean_increase_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                           cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                           use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                           dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+
+
+    def cpcv_mean_increase_efficiency(self, data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                      cpcv_n=5, cpcv_k=2, max_depth=3, n_estimators=5, use_pred_proba=True,
+                                      pred_proba_threshold=.5, dump_res_dic=True,
+                                      dump_file_path='ftrs_mean_incr_eff_res_dic.pickle', print_log=True):
+        """
+        The function executes CPCV testing.
+        :return: result dictionary
+        """
+        if print_log: print('\ncpcv_mean_increase_efficiency starts...\n')
+        time_start = dt.datetime.now()
+        if print_log: print('time_start= {}'.format(time_start))
+
         res_dic = {}
-        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_kernel, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
                  purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
                  n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
@@ -1461,16 +1583,16 @@ class FeaturesSelectionClass:
         #---
         sr_base = res['sr_mean']
         res_dic['_base_sr'] = (sr_base, 0.)
-        print(res_dic)
+        if print_log: print(res_dic)
         #---
-        print('***************************************************************************************************')
+        if print_log: print('***************************************************************************************************')
         time_loop_start = dt.datetime.now()
-        arr_len = len(features_for_ml_add)
-        for i, ftr in enumerate(features_for_ml_add, 1):
-            print('i= {0}, removed feature= {1}'.format(i, ftr))
-            features_for_ml_copy = copy.deepcopy(features_for_ml)
-            features_for_ml_copy.remove(ftr)
-            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_copy, self.target_clmn,
+        arr_len = len(features_for_ml_additional)
+        for i, ftr in enumerate(features_for_ml_additional, 1):
+            if print_log: print('i= {0}, added feature= {1}'.format(i, ftr))
+            features_for_ml = copy.deepcopy(features_for_ml_kernel)
+            features_for_ml.append(ftr)
+            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                      start_date=self.start_date, finish_date=self.finish_date,
                      purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
                      n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
@@ -1479,34 +1601,28 @@ class FeaturesSelectionClass:
                      save_picture=False, picture_path='',
                      pred_values_series_aggregation=True, dump_model=False, print_log=True)
             sr_cur = res['sr_mean']
-            delta = sr_cur - sr_base
+            delta = sr_cur-sr_base
             res_dic[ftr] = (sr_cur, delta)
             # print(res_dic)
             time_cur = dt.datetime.now()
             time_left = time_cur - time_loop_start
             time_eta = time_left/i*(arr_len-i)
-            print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
-            print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
-            print('***************************************************************************************************')
+            if print_log: print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
+            if print_log: print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
+            if print_log: print('***************************************************************************************************')
 
-
-        with open(self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic.pickle", "wb") as pckl:
-            pickle.dump(res_dic, pckl)
+        if dump_res_dic:
+            with open(dump_file_path, "wb") as pckl:
+                pickle.dump(res_dic, pckl)
 
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
-        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+        if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+        return res_dic
 
 
-    def cpcv_mean_increase_efficiency(self):
-        """
-        The function executes CPCV testing.
-        :return: None
-        """
-        print('cpcv_mean_increase_efficiency starts...\n')
-        time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
-
+    def cpcv_mean_increase_efficiency_execute(self):
         # --- dataframe load
         with open(self.data_pickle_path, "rb") as pckl:
             data = pickle.load(pckl)
@@ -1596,105 +1712,17 @@ class FeaturesSelectionClass:
         n_estimators = 5
         use_pred_proba = True
         pred_proba_threshold = .505  #.505
-        res_dic = {}
-        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_kernel, self.target_clmn,
-                 start_date=self.start_date, finish_date=self.finish_date,
-                 purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
-                 n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
-                 use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
-                 save_paths_return=False, pickle_path='',
-                 save_picture=False, picture_path='',
-                 pred_values_series_aggregation=True, dump_model=False, print_log=True)
-        #---
-        sr_base = res['sr_mean']
-        res_dic['_base_sr'] = (sr_base, 0.)
-        print(res_dic)
-        #---
-        print('***************************************************************************************************')
-        time_loop_start = dt.datetime.now()
-        arr_len = len(features_for_ml_additional)
-        for i, ftr in enumerate(features_for_ml_additional, 1):
-            print('i= {0}, added feature= {1}'.format(i, ftr))
-            features_for_ml = copy.deepcopy(features_for_ml_kernel)
-            features_for_ml.append(ftr)
-            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
-                     start_date=self.start_date, finish_date=self.finish_date,
-                     purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
-                     n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
-                     use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
-                     save_paths_return=False, pickle_path='',
-                     save_picture=False, picture_path='',
-                     pred_values_series_aggregation=True, dump_model=False, print_log=True)
-            sr_cur = res['sr_mean']
-            delta = sr_cur-sr_base
-            res_dic[ftr] = (sr_cur, delta)
-            # print(res_dic)
-            time_cur = dt.datetime.now()
-            time_left = time_cur - time_loop_start
-            time_eta = time_left/i*(arr_len-i)
-            print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
-            print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
-            print('***************************************************************************************************')
-
-
-        with open(self.folder_name + os.sep + "ftrs_mean_incr_eff_res_dic.pickle", "wb") as pckl:
-            pickle.dump(res_dic, pckl)
-
-        time_finish = dt.datetime.now()
-        time_duration = time_finish - time_start
-        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
-
-
-    def execute_selection(self):
-        """
-        The function executes features selection cycle.
-        :return: None
-        """
-        # --- dataframe load
-        time_start = dt.datetime.now()
-        print('time_start= {}'.format(time_start))
-
-        with open(self.data_pickle_path, "rb") as pckl:
-            data = pickle.load(pckl)
-        print('\ndata.shape: ', data.shape)
-
-        with open(self.label_pickle_path, "rb") as pckl:
-            lbl = pickle.load(pckl)
-        print('lbl.shape: ', lbl.shape)
-
-        data_lbl = pd.concat((data, lbl), axis=1)
-        print('data_lbl.shape: ', data_lbl.shape)
-
-        self.last_clmn = data.shape[1]
-        print('self.last_clmn= ', self.last_clmn)
-        print('last 5 columns: ', data_lbl.columns[self.last_clmn-5 : self.last_clmn])
-        # ---
-        del data
-        del lbl
-        self.testTimes = self.set_testTimes(dt0=self.dt0, dt1=self.dt1)
-
-        self.data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
-                                                   target_clmn=self.target_clmn)
-
-        # # ---
-        # # загрузка датафрейма в тестовых целях
-        # with open(r"/home/rom/01-Algorithmic_trading/02_1-EURUSD/data_for_ml_test_1.0.pickle", "rb") as pckl:
-        #     data_for_ml = pickle.load(pckl)
-        # self.data_for_ml = data_for_ml
-        # # ---
-
-        #---
-        self.features_selection(data_lbl)
-        #---
-
-        time_finish = dt.datetime.now()
-        time_duration = time_finish - time_start
-        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+        dump_res_dic = True
+        dump_file_path=self.folder_name + os.sep + "ftrs_mean_incr_eff_res_dic.pickle"
+        self.cpcv_mean_increase_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                      cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                      use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                      dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
 
 
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
-    # req.execute_selection()
+    # req.features_selection_execute()
     #---
     #---
     # res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
@@ -1724,8 +1752,8 @@ if __name__ == '__main__':
     #---
     # req.execute_cpcv()
     #---
-    # req.cpcv_mean_decrease_efficiency()
+    # req.cpcv_mean_decrease_efficiency_execute()
     #---
     #---
-    req.cpcv_mean_decrease_efficiency()
+    req.cpcv_mean_increase_efficiency_execute()
     #---
