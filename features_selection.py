@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 class FeaturesSelectionClass:
     n_loops = 2500  # количество циклов
     features_part = 0.06  # доля признаков, участвующих в тестировании в каждом проходе
-    folder_name = r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"  # r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
+    folder_name = r"/home/rom/01-Algorithmic_trading/02_1-EURUSD"  # r"d:\20-ML_projects\01-Algorithmic_trading\02_1-EURUSD"
     data_pickle_file_name = "eurusd_5_v1.4.pickle"
     label_pickle_file_name = "eurusd_5_v1_lbl_0i003_1i0_0i5.pickle"
 
@@ -1800,6 +1800,7 @@ class FeaturesSelectionClass:
         if print_log: print('final efficiency= {0:.6f}'.format(sr_base))
         #---
         res_dic['features_for_ml'] = features_for_ml
+        if print_log: print('features_for_ml:\n', features_for_ml)
         #---
         if dump_res_dic:
             with open(dump_file_path, "wb") as pckl:
@@ -1911,5 +1912,7 @@ if __name__ == '__main__':
     # req.cpcv_mean_decrease_efficiency_execute()
     #---
     #---
-    req.cpcv_mean_increase_efficiency_execute()
+    # req.cpcv_mean_increase_efficiency_execute()
+    #---
+    req.cpcv_optimum_efficiency_execute()
     #---
