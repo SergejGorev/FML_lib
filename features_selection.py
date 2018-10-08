@@ -1724,7 +1724,7 @@ class FeaturesSelectionClass:
     def cpcv_optimum_efficiency(self, data_for_ml, data, lbl, features_for_ml_kernel, features_for_elimination,
                                 cpcv_n=5, cpcv_k=2, max_depth=3, n_estimators=5, use_pred_proba=True,
                                 pred_proba_threshold=.5, dump_res_dic=True,
-                                dump_file_path='ftrs_mean_decr_eff_res_dic.pickle', print_log=True):
+                                dump_file_path='ftrs_opt_eff_res_dic.pickle', print_log=True):
         """
         The function executes CPCV testing.
         :return: None
@@ -1748,7 +1748,7 @@ class FeaturesSelectionClass:
                             pred_values_series_aggregation=True, dump_model=False, print_log=True)
         # ---
         sr_base = res['sr_mean']
-        res_dic['_base_sr'] = (sr_base, 0.)
+        res_dic['_base_sr_start'] = (sr_base, 0.)
         if print_log: print('start efficiency= {0:.6f}'.format(sr_base))
         # ---
         if print_log: print(
@@ -1796,8 +1796,10 @@ class FeaturesSelectionClass:
                             pred_values_series_aggregation=True, dump_model=False, print_log=True)
         # ---
         sr_base = res['sr_mean']
-        res_dic['_base_sr'] = (sr_base, 0.)
+        res_dic['_base_sr_final'] = (sr_base, 0.)
         if print_log: print('final efficiency= {0:.6f}'.format(sr_base))
+        #---
+        res_dic['features_for_ml'] = features_for_ml
         #---
         if dump_res_dic:
             with open(dump_file_path, "wb") as pckl:
@@ -1807,9 +1809,71 @@ class FeaturesSelectionClass:
         time_duration = time_finish - time_start
         if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
 
-        res_dic['features_for_ml'] = features_for_ml
-
         return res_dic
+
+
+    def cpcv_optimum_efficiency_execute(self):
+        # --- dataframe load
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+            label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+            lbl['label_buy'] = lbl[label_buy]
+            lbl['label_sell'] = lbl[label_sell]
+            lbl.drop(columns=[label_buy, label_sell], inplace=True)
+        print('lbl.shape: ', lbl.shape)
+        # ---
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        # ---
+        # del data
+        # del lbl
+
+        # data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+        #                                            target_clmn=self.target_clmn)
+        # with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "wb") as pckl:
+        #      pickle.dump(data_for_ml, pckl)
+
+        # ---
+        # загрузка датафрейма в тестовых целях
+        with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "rb") as pckl:
+            data_for_ml = pickle.load(pckl)
+        # ---
+        del data_lbl
+        #---
+        features_for_ml_kernel = \
+            ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
+             'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
+             'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
+             'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
+             'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
+        features_for_elimination = \
+            ['rsi_144', 'lr_cmpr_1440_2i5', 'tema_432', 'bb_rp_288_3i0',
+             'rtrn_144', 'adx_190', 'lr_uno_190_2i5', 'lr_uno_190_5i0',
+             'lr_uno_190_1i5', 'lr_duo_36_5i0', 'tema_720', 'dema_432',
+             'dema_576', 'so_k_234_2', 'so_d_234_2', 'ema_720', 'dema_open_576',
+             'macd_s_117_234_78', 'cci_432', 'dema_288', 'tema_576', 'rtrn_190',
+             'sr_288', 'hurst_576_25', 'cci_288', 'ema_36', 'ema_48', 'tema_6',
+             'ema_60', 'tema_12', 'tema_24', 'ema_6', 'tema_18', 'ema_12',
+             'dema_24', 'dema_18', 'ema_18', 'dema_12', 'dema_720', 'ema_108',
+             'ema_144', 'ema_288', 'ema_24', 'dema_108', 'dema_36', 'dema_72',
+             'tema_144', 'tema_108', 'tema_190', 'tema_36', 'ema_open_432']
+        cpcv_n = 5
+        cpcv_k = 2
+        max_depth = 3
+        n_estimators = 5
+        use_pred_proba = True
+        pred_proba_threshold = .505  #.505
+        dump_res_dic = True
+        dump_file_path=self.folder_name + os.sep + "ftrs_opt_eff_res_dic.pickle"
+        self.cpcv_optimum_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_elimination,
+                                      cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                      use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                      dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
 
 
 if __name__ == '__main__':
