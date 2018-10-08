@@ -1218,7 +1218,26 @@ class FeaturesSelectionClass:
         # ---
         del data_lbl
         #---
-        # features_for_ml = \
+        features_for_ml_kernel = \
+            ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
+             'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
+             'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
+             'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
+             'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
+        features_for_ml_add = \
+            ['tema_6', 'tema_12', 'dema_6', 'tema_24', 'ema_6', 'tema_18',
+             'ema_12', 'dema_24', 'dema_18', 'ema_18', 'dema_12', 'open',
+             'dema_720', 'ema_144', 'ema_108', 'dema_72', 'ema_288', 'adi_24',
+             'tema_36', 'tema_108', 'tema_144', 'tema_190', 'dema_36',
+             'tema_72', 'dema_108', 'ema_24', 'ema_60', 'hurst_1440_10',
+             'ema_48', 'ema_36', 'lr_cmpr_1440_2i5', 'adi_108', 'rtrn_144',
+             'adx_190', 'lr_uno_190_2i5', 'lr_uno_190_5i0', 'lr_uno_190_1i5',
+             'lr_duo_36_5i0', 'tema_432', 'tema_720', 'dema_432', 'dema_576',
+             'adx_108', 'adx_144', 'so_k_234_2', 'so_d_234_2', 'ema_720',
+             'dema_open_576', 'hurst_432_50', 'rsi_144', 'macd_s_117_234_78',
+             'cci_432', 'dema_288', 'tema_576', 'rtrn_190', 'adx_576', 'sr_288',
+             'hurst_576_25', 'adi_60', 'cci_288', 'bb_rp_288_3i0',
+             'ema_open_432']
         # ['lr_duo_1440_5i0',
         #  'lr_duo_1152_5i0',
         #  'ema_720',
@@ -1419,26 +1438,7 @@ class FeaturesSelectionClass:
         #  'rtrn_144',
         #  'lr_duo_108_1i5',
         #  'lr_uno_190_2i5']
-        features_for_ml_kernel = \
-            ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
-             'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
-             'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
-             'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
-             'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
-        features_for_ml_add = \
-            ['tema_6', 'tema_12', 'dema_6', 'tema_24', 'ema_6', 'tema_18',
-             'ema_12', 'dema_24', 'dema_18', 'ema_18', 'dema_12', 'open',
-             'dema_720', 'ema_144', 'ema_108', 'dema_72', 'ema_288', 'adi_24',
-             'tema_36', 'tema_108', 'tema_144', 'tema_190', 'dema_36',
-             'tema_72', 'dema_108', 'ema_24', 'ema_60', 'hurst_1440_10',
-             'ema_48', 'ema_36', 'lr_cmpr_1440_2i5', 'adi_108', 'rtrn_144',
-             'adx_190', 'lr_uno_190_2i5', 'lr_uno_190_5i0', 'lr_uno_190_1i5',
-             'lr_duo_36_5i0', 'tema_432', 'tema_720', 'dema_432', 'dema_576',
-             'adx_108', 'adx_144', 'so_k_234_2', 'so_d_234_2', 'ema_720',
-             'dema_open_576', 'hurst_432_50', 'rsi_144', 'macd_s_117_234_78',
-             'cci_432', 'dema_288', 'tema_576', 'rtrn_190', 'adx_576', 'sr_288',
-             'hurst_576_25', 'adi_60', 'cci_288', 'bb_rp_288_3i0',
-             'ema_open_432']
+        #---
         #---
         features_for_ml = features_for_ml_kernel
         features_for_ml.extend(features_for_ml_add)
@@ -1632,7 +1632,7 @@ class FeaturesSelectionClass:
             time_cur = dt.datetime.now()
             time_left = time_cur - time_loop_start
             time_eta = time_left/i*(arr_len-i)
-            print('sr_cur= {0:.6f}, delta= {1:.6f}'.format(sr_cur, delta))
+            print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
             print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
             print('***************************************************************************************************')
 
