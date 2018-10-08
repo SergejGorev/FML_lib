@@ -1290,6 +1290,7 @@ class FeaturesSelectionClass:
 
         return res_dic
 
+
     def cpcv_mean_decrease_efficiency_execute(self):
         # --- dataframe load
         with open(self.data_pickle_path, "rb") as pckl:
@@ -1718,6 +1719,97 @@ class FeaturesSelectionClass:
                                       cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
                                       use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
                                       dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+
+
+    def cpcv_optimum_efficiency(self, data_for_ml, data, lbl, features_for_ml_kernel, features_for_elimination,
+                                cpcv_n=5, cpcv_k=2, max_depth=3, n_estimators=5, use_pred_proba=True,
+                                pred_proba_threshold=.5, dump_res_dic=True,
+                                dump_file_path='ftrs_mean_decr_eff_res_dic.pickle', print_log=True):
+        """
+        The function executes CPCV testing.
+        :return: None
+        """
+        if print_log: print('\ncpcv_optimum_efficiency starts...\n')
+        time_start = dt.datetime.now()
+        if print_log: print('time_start= {}'.format(time_start))
+
+        # ---
+        features_for_ml = features_for_ml_kernel
+        features_for_ml.extend(features_for_elimination)
+        # ---
+        res_dic = {}
+        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+                            start_date=self.start_date, finish_date=self.finish_date,
+                            purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                            n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                            use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                            save_paths_return=False, pickle_path='',
+                            save_picture=False, picture_path='',
+                            pred_values_series_aggregation=True, dump_model=False, print_log=True)
+        # ---
+        sr_base = res['sr_mean']
+        res_dic['_base_sr'] = (sr_base, 0.)
+        if print_log: print('start efficiency= {0:.6f}'.format(sr_base))
+        # ---
+        if print_log: print(
+            '***************************************************************************************************')
+        time_loop_start = dt.datetime.now()
+        arr_len = len(features_for_elimination)
+        for i, ftr in enumerate(features_for_elimination, 1):
+            if print_log: print('i= {0}, feature_for_elimination= {1}'.format(i, ftr))
+            features_for_ml_copy = copy.deepcopy(features_for_ml)
+            features_for_ml_copy.remove(ftr)
+            res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml_copy, self.target_clmn,
+                                start_date=self.start_date, finish_date=self.finish_date,
+                                purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth,
+                                n_estimators=n_estimators,
+                                n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                                use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                save_paths_return=False, pickle_path='',
+                                save_picture=False, picture_path='',
+                                pred_values_series_aggregation=True, dump_model=False, print_log=True)
+            sr_cur = res['sr_mean']
+            delta = sr_cur - sr_base
+            res_dic[ftr] = (sr_cur, delta)
+            # print(res_dic)
+            time_cur = dt.datetime.now()
+            time_left = time_cur - time_loop_start
+            time_eta = time_left / i * (arr_len - i)
+            if print_log: print('ftr= {0}, sr_cur= {1:.6f}, delta= {2:.6f}'.format(ftr, sr_cur, delta))
+            if print_log: print('time_eta= {0}, time_left= {1}, time_cur={2}'.format(time_eta, time_left, time_cur))
+            if delta>0:
+                sr_base = sr_cur
+                if print_log: print('new value of sr_base= {0:.6f}'.format(sr_base))
+            if delta>=0:
+                features_for_ml.remove(ftr)
+                if print_log: print('\'{}\' was removed from features_for_ml'.format(ftr))
+            if print_log: print(
+                '***************************************************************************************************')
+        #---
+        res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
+                            start_date=self.start_date, finish_date=self.finish_date,
+                            purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                            n_jobs=-1, profit_value=self.profit_value, loss_value=self.loss_value,
+                            use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                            save_paths_return=False, pickle_path='',
+                            save_picture=False, picture_path='',
+                            pred_values_series_aggregation=True, dump_model=False, print_log=True)
+        # ---
+        sr_base = res['sr_mean']
+        res_dic['_base_sr'] = (sr_base, 0.)
+        if print_log: print('final efficiency= {0:.6f}'.format(sr_base))
+        #---
+        if dump_res_dic:
+            with open(dump_file_path, "wb") as pckl:
+                pickle.dump(res_dic, pckl)
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        if print_log: print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+        res_dic['features_for_ml'] = features_for_ml
+
+        return res_dic
 
 
 if __name__ == '__main__':
