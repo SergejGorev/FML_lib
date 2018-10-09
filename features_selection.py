@@ -578,7 +578,7 @@ class FeaturesSelectionClass:
                                                                                 self.n_features))
 
 
-    def features_selection(self, data_lbl):
+    def features_importance_evaluation(self, data_lbl):
         """
         The function performs cyclic cross-validation testing with randomly selected features,
         determines the relative features importance and forms and save a dataframe with evaluated statistics.
@@ -668,7 +668,7 @@ class FeaturesSelectionClass:
             print('\n----------------------------------------------------------------------------------------------------\n')
 
 
-    def features_selection_execute(self):
+    def features_importance_evaluation_execute(self):
         """
         The function executes features selection cycle.
         :return: None
@@ -707,7 +707,7 @@ class FeaturesSelectionClass:
         # # ---
 
         #---
-        self.features_selection(data_lbl)
+        self.features_importance_evaluation(data_lbl)
         #---
 
         time_finish = dt.datetime.now()
@@ -1554,7 +1554,7 @@ class FeaturesSelectionClass:
         pred_proba_threshold = .505  # .505
         dump_res_dic = True
         dump_file_path = self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic.pickle"
-        self.cpcv_mean_increase_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+        self.cpcv_mean_decrease_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
                                            cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
                                            use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
                                            dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
@@ -1877,9 +1877,333 @@ class FeaturesSelectionClass:
                                       dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
 
 
+    def features_selection(self):
+        """
+        The function performes 4-step fetures selection.
+
+        :return: list of features
+        """
+        # --- dataframe load
+        time_start = dt.datetime.now()
+
+        with open(self.data_pickle_path, "rb") as pckl:
+            data = pickle.load(pckl)
+        print('\ndata.shape: ', data.shape)
+
+        with open(self.label_pickle_path, "rb") as pckl:
+            lbl = pickle.load(pckl)
+            label_buy, label_sell = 'label_buy' + self.postfix, 'label_sell' + self.postfix
+            lbl['label_buy'] = lbl[label_buy]
+            lbl['label_sell'] = lbl[label_sell]
+            lbl.drop(columns=[label_buy, label_sell], inplace=True)
+        print('lbl.shape: ', lbl.shape)
+        # ---
+        data_lbl = pd.concat((data, lbl), axis=1)
+        print('data_lbl.shape: ', data_lbl.shape)
+
+        # ---
+        # del data
+        # del lbl
+
+        # data_for_ml = self.select_data_for_ml(data_lbl=data_lbl, price_step=self.price_step,
+        #                                            target_clmn=self.target_clmn)
+        # with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "wb") as pckl:
+        #      pickle.dump(data_for_ml, pckl)
+
+        # ---
+        # загрузка датафрейма в тестовых целях
+        with open(self.folder_name + os.sep + "data_for_ml_test_1.0.pickle", "rb") as pckl:
+            data_for_ml = pickle.load(pckl)
+        # ---
+        # --- 1-st step
+        features_for_ml_kernel = []
+        features_for_ml_additional = \
+        ['lr_duo_1440_5i0',
+         'lr_duo_1152_5i0',
+         'ema_720',
+         'lr_duo_288_5i0',
+         'adx_576',
+         'lr_duo_576_5i0',
+         'lr_duo_1152_2i5',
+         'lr_uno_1440_1i5',
+         'sr_1440',
+         'lr_uno_1440_5i0',
+         'lr_uno_1440_2i5',
+         'lr_duo_576_2i5',
+         'lr_duo_864_5i0',
+         'lr_duo_1440_2i5',
+         'lr_uno_1152_2i5',
+         'ema_576',
+         'lr_duo_720_5i0',
+         'lr_uno_1152_5i0',
+         'lr_uno_1152_1i5',
+         'ema_432',
+         'lr_duo_864_1i5',
+         'adx_432',
+         'tema_288',
+         'lr_duo_720_1i5',
+         'tema_12',
+         'tema_720',
+         'adx_720',
+         'dema_6',
+         'lr_duo_864_2i5',
+         'lr_duo_1440_1i5',
+         'lr_duo_288_1i5',
+         'ema_288',
+         'adi_6',
+         'ema_60',
+         'tema_6',
+         'tema_190',
+         'lr_cmpr_1152_5i0',
+         'ema_18',
+         'open',
+         'tema_432',
+         'hurst_1440_10',
+         'tema_576',
+         'rtrn_864',
+         'dema_576',
+         'tema_24',
+         'lr_cmpr_1440_5i0',
+         'sr_432',
+         'ema_6',
+         'adx_144',
+         'dema_72',
+         'sr_720',
+         'tema_18',
+         'dema_12',
+         'adx_288',
+         'adi_720',
+         'rtrn_1440',
+         'ema_12',
+         'adi_1440',
+         'dema_108',
+         'dema_18',
+         'dema_432',
+         'lr_duo_108_5i0',
+         'ema_24',
+         'dema_144',
+         'lr_duo_72_5i0',
+         'adi_60',
+         'ema_48',
+         'bb_rp_1440_1i0',
+         'adi_12',
+         'hurst_720_50',
+         'adi_24',
+         'ema_72',
+         'lr_duo_1152_1i5',
+         'dema_288',
+         'adi_48',
+         'lr_cmpr_720_5i0',
+         'lr_duo_190_5i0',
+         'adi_18',
+         'ema_144',
+         'hurst_1440_25',
+         'ema_36',
+         'sr_576',
+         'adi_576',
+         'bb_rp_1440_3i0',
+         'hurst_1440_50',
+         'lr_cmpr_1440_2i5',
+         'adx_190',
+         'adi_36',
+         'tema_144',
+         'dema_720',
+         'ema_108',
+         'bb_rp_1440_2i0',
+         'tema_108',
+         'dema_190',
+         'lr_duo_190_2i5',
+         'hurst_576_50',
+         'cci_1440',
+         'hurst_576_25',
+         'adi_72',
+         'hurst_864_50',
+         'rsi_720',
+         'macd_s_117_234_78',
+         'dema_36',
+         'adx_108',
+         'dema_24',
+         'lr_cmpr_864_5i0',
+         'hurst_720_25',
+         'hurst_576_10',
+         'tema_72',
+         'adi_432',
+         'rtrn_1152',
+         'rtrn_720',
+         'hurst_864_10',
+         'lr_duo_720_2i5',
+         'rtrn_576',
+         'hurst_1152_50',
+         'adi_108',
+         'macd_117_234_78',
+         'sr_288',
+         'adi_144',
+         'ema_open_720',
+         'hurst_720_10',
+         'ema_cmpr_6_720',
+         'hurst_288_25',
+         'hurst_1152_10',
+         'lr_uno_576_1i5',
+         'lr_uno_288_1i5',
+         'lr_uno_576_2i5',
+         'cci_1152',
+         'rsi_576',
+         'hurst_288_50',
+         'lr_uno_864_5i0',
+         'lr_cmpr_576_2i5',
+         'cci_720',
+         'hurst_432_50',
+         'lr_cmpr_1152_1i5',
+         'hurst_432_10',
+         'lr_uno_864_2i5',
+         'lr_uno_576_5i0',
+         'cci_864',
+         'lr_duo_576_1i5',
+         'lr_uno_864_1i5',
+         'mfi_720',
+         'mfi_288',
+         'lr_duo_108_2i5',
+         'lr_uno_288_5i0',
+         'adi_288',
+         'hurst_864_25',
+         'mfi_576',
+         'lr_cmpr_1152_2i5',
+         'lr_uno_720_1i5',
+         'lr_cmpr_1440_1i5',
+         'ema_open_576',
+         'tema_open_720',
+         'hurst_1152_25',
+         'lr_cmpr_720_2i5',
+         'lr_uno_720_5i0',
+         'lr_duo_190_1i5',
+         'ema_open_288',
+         'lr_uno_288_2i5',
+         'tema_36',
+         'hurst_288_10',
+         'cci_576',
+         'tema_cmpr_6_720',
+         'cci_288',
+         'lr_cmpr_576_5i0',
+         'dema_open_720',
+         'cci_432',
+         'ema_open_432',
+         'mfi_432',
+         'lr_cmpr_864_2i5',
+         'ema_cmpr_6_288',
+         'dema_cmpr_6_720',
+         'dema_open_576',
+         'lr_uno_720_2i5',
+         'tema_open_576',
+         'hurst_432_25',
+         'lr_duo_288_2i5',
+         'bb_rp_576_1i0',
+         'lr_cmpr_864_1i5',
+         'dema_cmpr_6_432',
+         'bb_rp_576_2i0',
+         'bb_rp_720_1i0',
+         'lr_cmpr_576_1i5',
+         'dema_open_432',
+         'lr_uno_190_5i0',
+         'bb_rp_720_3i0',
+         'rtrn_190',
+         'so_k_234_2',
+         'bb_rp_288_3i0',
+         'lr_duo_36_5i0',
+         'lr_uno_190_1i5',
+         'rsi_144',
+         'so_d_234_2',
+         'bb_rp_576_3i0',
+         'bb_rp_720_2i0',
+         'adx_72',
+         'rtrn_144',
+         'lr_duo_108_1i5',
+         'lr_uno_190_2i5']
+        #---
+        #---
+        cpcv_n = 5
+        cpcv_k = 2
+        max_depth = 3
+        n_estimators = 5
+        use_pred_proba = True
+        pred_proba_threshold = .505  # .505
+        #---
+        dump_res_dic = True
+        dump_file_path = self.folder_name + os.sep + "ftrs_mean_decr_eff_res_dic_3.pickle"
+        decr_res = self.cpcv_mean_decrease_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                           cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                           use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                           dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+        #---
+        new_arr = []
+        for item in decr_res.items():
+            new_arr.append((item[0], item[1][0], item[1][1]))
+
+        ftrs_mean_decr_eff_df = pd.DataFrame(new_arr)
+        del new_arr
+        ftrs_mean_decr_eff_df.columns = ['feature', 'sr', 'delta']
+        decr_base_sr = ftrs_mean_decr_eff_df.loc[ftrs_mean_decr_eff_df.feature == '_base_sr', 'sr'].values[0]
+        ftrs_mean_decr_eff_df = ftrs_mean_decr_eff_df[1:]
+        print('1-st step (mean_decrease_efficiency): base_sr= {0:.6f}'.format(decr_base_sr))
+        ftrs_mean_decr_eff_df_sorted = ftrs_mean_decr_eff_df.sort_values(by='delta', ascending=True)
+        # ftrs_mean_decr_eff_df_sorted.index = range(1, ftrs_mean_decr_eff_df_sorted.shape[0] + 1)
+        features_for_ml_kernel = ftrs_mean_decr_eff_df_sorted.loc[ftrs_mean_decr_eff_df_sorted['delta']>0, 'feature'].values
+        print('1-st step (mean_decrease_efficiency): features_for_ml_kernel:\n{0}'.format(features_for_ml_kernel))
+        #---
+        #--- 2-nd step
+        features_for_elimination = features_for_ml_kernel
+        features_for_ml_kernel = []
+
+        dump_res_dic = True
+        dump_file_path=self.folder_name + os.sep + "ftrs_opt_eff_res_dic_3.0.pickle"
+        opt_res = self.cpcv_optimum_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_elimination,
+                                      cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                      use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                      dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+        features_for_ml_kernel = opt_res['features_for_ml']
+        print('2-nd step (cpcv_optimum_efficiency): features_for_ml_kernel:\n{0}'.format(features_for_ml_kernel))
+        for ftr in features_for_ml_kernel:
+            features_for_ml_additional.remove(ftr)
+        print('2-nd step (cpcv_optimum_efficiency): features_for_ml_additional:\n{0}'.format(features_for_ml_additional))
+        #---
+        #--- 3-rd step
+        dump_res_dic = True
+        dump_file_path=self.folder_name + os.sep + "ftrs_mean_incr_eff_res_dic_3.pickle"
+        incr_res = self.cpcv_mean_increase_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_ml_additional,
+                                      cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                      use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                      dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+        new_arr = []
+        for item in incr_res.items():
+            new_arr.append((item[0], item[1][0], item[1][1]))
+
+        ftrs_mean_incr_eff_df = pd.DataFrame(new_arr)
+        del new_arr
+        ftrs_mean_incr_eff_df.columns = ['feature', 'sr', 'delta']
+        incr_base_sr = ftrs_mean_incr_eff_df.loc[ftrs_mean_incr_eff_df.feature == '_base_sr', 'sr'].values[0]
+        ftrs_mean_incr_eff_df = ftrs_mean_incr_eff_df[1:]
+        print('3-rd step (cpcv_mean_increase_efficiency): base_sr= {0:.6f}'.format(incr_base_sr))
+        ftrs_mean_incr_eff_df_sorted = ftrs_mean_incr_eff_df.sort_values(by='delta', ascending=False)
+        # ftrs_mean_incr_eff_df_sorted.index = range(1, ftrs_mean_incr_eff_df_sorted.shape[0] + 1)
+        features_for_elimination = ftrs_mean_incr_eff_df_sorted.loc[ftrs_mean_incr_eff_df_sorted.delta > 0., :].values
+        print('3-rd step (cpcv_mean_increase_efficiency): features_for_elimination:\n{0}'.format(features_for_elimination))
+        #--- 4-th step
+        dump_res_dic = True
+        dump_file_path=self.folder_name + os.sep + "ftrs_opt_eff_res_dic_3.1.pickle"
+        opt_res = self.cpcv_optimum_efficiency(data_for_ml, data, lbl, features_for_ml_kernel, features_for_elimination,
+                                      cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
+                                      use_pred_proba=use_pred_proba, pred_proba_threshold=pred_proba_threshold,
+                                      dump_res_dic=dump_res_dic, dump_file_path=dump_file_path, print_log=True)
+        features_for_ml = opt_res['features_for_ml']
+        print('4-th step (cpcv_optimum_efficiency): features_for_ml:\n{0}'.format(features_for_ml))
+        #---
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('time_finish= {0}, duration= {1}'.format(time_finish, time_duration))
+
+
 if __name__ == '__main__':
     req = FeaturesSelectionClass()
-    # req.features_selection_execute()
+    # req.features_importance_evaluation_execute()
     #---
     #---
     # res = req.features_arr_analyze(features_imp_arr_path=req.f_i_pickle_path, first_feature_number=14,
