@@ -2238,5 +2238,7 @@ if __name__ == '__main__':
     #---
     # req.cpcv_mean_increase_efficiency_execute()
     #---
-    req.cpcv_optimum_efficiency_execute()
+    # req.cpcv_optimum_efficiency_execute()
+    #---
+    req.features_selection()
     #---
