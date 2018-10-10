@@ -2184,7 +2184,7 @@ class FeaturesSelectionClass:
         print('3-rd step (cpcv_mean_increase_efficiency): base_sr= {0:.6f}'.format(incr_base_sr))
         ftrs_mean_incr_eff_df_sorted = ftrs_mean_incr_eff_df.sort_values(by='delta', ascending=False)
         # ftrs_mean_incr_eff_df_sorted.index = range(1, ftrs_mean_incr_eff_df_sorted.shape[0] + 1)
-        features_for_elimination = ftrs_mean_incr_eff_df_sorted.loc[ftrs_mean_incr_eff_df_sorted.delta > 0., :].values
+        features_for_elimination = ftrs_mean_incr_eff_df_sorted.loc[ftrs_mean_incr_eff_df_sorted.delta > 0., 'feature'].values
         print('3-rd step (cpcv_mean_increase_efficiency): features_for_elimination:\n{0}'.format(features_for_elimination))
         #--- 4-th step
         dump_res_dic = True
