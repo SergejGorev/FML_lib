@@ -698,43 +698,6 @@ class FeaturesCalcClass:
         return df
 
 
-    def update_df(self, data, print_log=True):
-        warnings.filterwarnings('ignore')
-        #--- dataframe load
-        time_start = dt.datetime.now()
-        print('features updating: time_start= {}'.format(time_start))
-        #---
-
-        #---
-        if print_log: print("Hurst calculation...")
-        data = self.run_hurst_calc(data, dump_pickle=True, print_log=print_log)
-        #---
-        data = self.ema_calc(data, print_log=print_log)
-        data = self.run_sharpe_calc(data, print_log=print_log)
-        data = self.run_adi_calc(data, print_log=print_log)
-        data = self.bb_calc(data, print_log=print_log)
-        data = self.so_calc(data, print_log=print_log)
-        data = self.rsi_calc(data, print_log=print_log)
-        data = self.cci_calc(data, print_log=print_log)
-        data = self.adx_calc(data, print_log=print_log)
-        data = self.dema_calc(data, print_log=print_log)
-        data = self.tema_calc(data, print_log=print_log)
-        data = self.macd_calc(data, print_log=print_log)
-        data = self.mfi_calc(data, print_log=print_log)
-        data = self.lr_calc(data, print_log=print_log)
-        data = self.return_calc(data, print_log=print_log)
-        #---
-        warnings.filterwarnings('default')
-
-        if self.dump_pickle:
-            with open(self.data_pickle_path_for_dump, "wb") as pckl:
-                pickle.dump(data, pckl)
-
-        time_finish = dt.datetime.now()
-        time_duration = time_finish - time_start
-        print('features updating: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
-
-
     def execute(self, print_log=True):
         #--- dataframe load
         time_start = dt.datetime.now()
@@ -771,6 +734,43 @@ class FeaturesCalcClass:
         time_finish = dt.datetime.now()
         time_duration = time_finish - time_start
         print('features creating: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
+
+
+    def update_df(self, data, print_log=True):
+        warnings.filterwarnings('ignore')
+        #--- dataframe load
+        time_start = dt.datetime.now()
+        print('features updating: time_start= {}'.format(time_start))
+        #---
+
+        #---
+        if print_log: print("Hurst calculation...")
+        data = self.run_hurst_calc(data, dump_pickle=True, print_log=print_log)
+        #---
+        data = self.ema_calc(data, print_log=print_log)
+        data = self.run_sharpe_calc(data, print_log=print_log)
+        data = self.run_adi_calc(data, print_log=print_log)
+        data = self.bb_calc(data, print_log=print_log)
+        data = self.so_calc(data, print_log=print_log)
+        data = self.rsi_calc(data, print_log=print_log)
+        data = self.cci_calc(data, print_log=print_log)
+        data = self.adx_calc(data, print_log=print_log)
+        data = self.dema_calc(data, print_log=print_log)
+        data = self.tema_calc(data, print_log=print_log)
+        data = self.macd_calc(data, print_log=print_log)
+        data = self.mfi_calc(data, print_log=print_log)
+        data = self.lr_calc(data, print_log=print_log)
+        data = self.return_calc(data, print_log=print_log)
+        #---
+        warnings.filterwarnings('default')
+
+        if self.dump_pickle:
+            with open(self.data_pickle_path_for_dump, "wb") as pckl:
+                pickle.dump(data, pckl)
+
+        time_finish = dt.datetime.now()
+        time_duration = time_finish - time_start
+        print('features updating: time_finish= {0}, duration= {1}'.format(time_start, time_duration))
 
 
 if __name__ == '__main__':
