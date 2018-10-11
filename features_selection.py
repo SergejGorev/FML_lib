@@ -986,11 +986,14 @@ class FeaturesSelectionClass:
         del data_lbl
         #---
         features_for_ml = \
-            ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
-             'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
-             'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
-             'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
-             'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
+            ['adi_60', 'adx_108', 'lr_duo_864_5i0', 'hurst_432_50', 'sr_720', 'adi_108', 'adi_24', 'adx_190', 'adi_36',
+             'ema_open_576', 'adi_144', 'adi_48', 'lr_duo_108_5i0', 'adi_6', 'tema_432', 'bb_rp_720_3i0', 'tema_12',
+             'lr_cmpr_1440_1i5', 'dema_24']
+            # ['adi_12', 'adi_6', 'lr_duo_1440_5i0', 'adi_36', 'adi_432',
+            #  'adi_720', 'adi_144', 'hurst_288_10', 'tema_288', 'adi_1440',
+            #  'sr_576', 'adx_72', 'lr_cmpr_1152_2i5', 'adi_48', 'ema_open_288',
+            #  'adi_288', 'adx_720', 'sr_1440', 'lr_cmpr_1440_1i5', 'adi_18',
+            #  'lr_cmpr_720_5i0', 'dema_open_720', 'lr_cmpr_1152_5i0']
         # ['lr_duo_1440_5i0',
         #  'lr_duo_1152_5i0',
         #  'ema_720',
@@ -1191,22 +1194,26 @@ class FeaturesSelectionClass:
         #  'rtrn_144',
         #  'lr_duo_108_1i5',
         #  'lr_uno_190_2i5']
-        cpcv_n = 5
-        cpcv_k = 2
+        cpcv_n = 20
+        cpcv_k = 3
         max_depth = 3
         n_estimators = 5
         use_pred_proba = True
         pred_proba_threshold = .505  #.505
+        id_postfix = 'opt_ftrs_0'
         if use_pred_proba:
             pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.postfix + '_' + self.version +\
-                          '_pred_prob_'+processing.digit_to_text(pred_proba_threshold) + '.pickle'
+                          '_pred_prob_'+processing.digit_to_text(pred_proba_threshold) + '_' + id_postfix + '.pickle'
             picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix + '_' + \
                            str(cpcv_n) + '_' + str(cpcv_k) + '_' + str(max_depth) + '_' + str(n_estimators)  + '_' +\
-                           self.version + '_pred_prob_'+processing.digit_to_text(pred_proba_threshold)+ '.jpg'
+                           self.version + '_pred_prob_'+processing.digit_to_text(pred_proba_threshold) + '_' +\
+                           id_postfix + '.jpg'
         else:
-            pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.pickle_postfix
-            picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix +'_'+ \
-                           str(cpcv_n)+'_'+ str(cpcv_k)+'_'+ str(max_depth)+'_'+ str(n_estimators)+'.jpg'
+            pickle_path = self.folder_name + os.sep + 'paths_return_df' + self.postfix + '_' + self.version +'_' +\
+                          id_postfix + '.pickle'
+            picture_path = self.folder_name + os.sep + 'CPCV_testing_return' + self.postfix + '_' + \
+                           str(cpcv_n) + '_' + str(cpcv_k) + '_' + str(max_depth) + '_' + str(n_estimators)  + '_' +\
+                           self.version + '_' + id_postfix + '.jpg'
         res = self.cpcv_xgb(data_for_ml, data, lbl, features_for_ml, self.target_clmn,
                  start_date=self.start_date, finish_date=self.finish_date,
                  purged_period=3, cpcv_n=cpcv_n, cpcv_k=cpcv_k, max_depth=max_depth, n_estimators=n_estimators,
@@ -2231,7 +2238,7 @@ if __name__ == '__main__':
     #                                              print_log=True)
     #---
     #---
-    # req.execute_cpcv()
+    req.execute_cpcv()
     #---
     # req.cpcv_mean_decrease_efficiency_execute()
     #---
@@ -2240,5 +2247,5 @@ if __name__ == '__main__':
     #---
     # req.cpcv_optimum_efficiency_execute()
     #---
-    req.features_selection()
+    # req.features_selection()
     #---
